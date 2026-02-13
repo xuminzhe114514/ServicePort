@@ -250,7 +250,6 @@ class DemoApplicationTests {
         // 2. 测试findByExpirationDateBeforeAndStatus
         List<Stock> expiredStocks = stockRepository.findByExpirationDateBeforeAndStatus(
                 LocalDate.now().minusDays(1), 1);
-        // 这里应该为空，因为我们的测试数据有效期是未来180天
         assertTrue(expiredStocks.isEmpty(), "应找不到过期库存");
 
         // 3. 测试findExpiringStock
@@ -261,7 +260,6 @@ class DemoApplicationTests {
 
         // 4. 测试findLowStock
         List<Stock> lowStocks = stockRepository.findLowStock();
-        // 当前库存100，预警值20，所以不是低库存
         assertTrue(lowStocks.isEmpty(), "应找不到低库存");
 
         // 5. 测试findByBatchNumber

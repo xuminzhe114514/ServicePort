@@ -1862,3 +1862,165 @@
 | 500 Internal Server Error | 服务器内部错误 | 处理过程异常       |
 
 
+
+## 配置层 (Config Layer) 文档
+### 配置类使用
+
+1. **HttpClientConfig**：
+   - 在需要发送HTTP请求的服务中注入 `RestTemplate`
+   - 在需要JSON序列化/反序列化的地方注入 `ObjectMapper`
+
+2. **PasswordEncoderConfig**：
+   - 在用户认证、注册、密码修改等场景中注入 `PasswordEncoder`
+   - 使用其 `encode()` 方法加密密码，`matches()` 方法验证密码
+
+3. **SecurityConfig**：
+   - 当前配置为开发/测试环境专用
+   - 生产环境应根据实际需求调整安全策略
+
+### 1. 类：HttpClientConfig（HTTP客户端配置）
+
+**位置**：`com.example.demo.config`
+
+**继承关系**：无
+
+**类注解说明**：
+- `@Configuration`：标识为Spring配置类
+
+**描述**：配置HTTP客户端相关的Bean，包括RestTemplate和ObjectMapper
+
+**方法列表**：
+
+| 方法签名 | 返回类型 | 参数 | 描述 | 可见性权限 | 注解/备注 |
+| -------- | -------- | ---- | ---- | ---------- | ---------- |
+| `restTemplate()` | `RestTemplate` | 无 | 创建并返回RestTemplate实例 | Public | `@Bean` 注解，注册为Spring Bean |
+| `objectMapper()` | `ObjectMapper` | 无 | 创建并返回ObjectMapper实例 | Public | `@Bean` 注解，注册为Spring Bean |
+
+**功能说明**：
+- `RestTemplate`：用于发送HTTP请求，调用外部API
+- `ObjectMapper`：用于JSON序列化和反序列化
+
+---
+
+### 2. 类：PasswordEncoderConfig（密码编码器配置）
+
+**位置**：`com.example.demo.config`
+
+**继承关系**：无
+
+**类注解说明**：
+- `@Configuration`：标识为Spring配置类
+
+**描述**：配置密码编码器Bean，用于密码加密和验证
+
+**方法列表**：
+
+| 方法签名 | 返回类型 | 参数 | 描述 | 可见性权限 | 注解/备注 |
+| -------- | -------- | ---- | ---- | ---------- | ---------- |
+| `passwordEncoder()` | `PasswordEncoder` | 无 | 创建并返回BCryptPasswordEncoder实例 | Public | `@Bean` 注解，注册为Spring Bean |
+
+**功能说明**：
+- `BCryptPasswordEncoder`：使用BCrypt算法对密码进行加密和验证，提供安全的密码存储方案
+
+---
+
+### 3. 类：SecurityConfig（安全配置）
+
+**位置**：`com.example.demo.config`
+
+**继承关系**：无
+
+**类注解说明**：
+- `@Configuration`：标识为Spring配置类
+- `@EnableWebSecurity`：启用Spring Security
+
+**描述**：配置Spring Security，设置请求授权规则和安全策略
+
+**方法列表**：
+
+| 方法签名 | 返回类型 | 参数 | 描述 | 可见性权限 | 注解/备注 |
+| -------- | -------- | ---- | ---- | ---------- | ---------- |
+| `filterChain(HttpSecurity http)` | `SecurityFilterChain` | `http`：HttpSecurity对象 | 配置安全过滤链 | Public | `@Bean` 注解，注册为Spring Bean |
+
+**配置详情**：
+1. **禁用CSRF**：方便测试POST/PUT/DELETE请求
+2. **允许所有请求**：无需登录即可访问所有接口
+3. **禁用登录页**：避免浏览器弹窗
+4. **禁用Basic认证**：简化测试流程
+
+**适用场景**：
+- 开发环境
+- 测试环境
+- 无需身份验证的公开API
+
+---
+
+## 视图层 (Views Layer) 文档
+
+### 1. 类：Views（JSON视图定义）
+
+**位置**：`com.example.demo.views`
+
+**继承关系**：无
+
+**类注解说明**：无
+
+**描述**：定义JSON视图接口，用于控制API响应中字段的可见性
+
+**接口列表**：
+
+| 接口名 | 继承关系 | 描述 | 适用场景 |
+| ------ | -------- | ---- | -------- |
+| `Public` | 无 | 公共可访问字段 | 所有公开接口，返回基础信息 |
+| `Internal` | `extends Public` | 内部使用字段 | 内部系统接口，返回更多信息 |
+| `Detail` | `extends Internal` | 详细字段 | 需要详细信息的接口 |
+| `Admin` | `extends Detail` | 管理员字段 | 管理员接口，返回所有信息 |
+| `MLFeatures` | `extends Public` | 机器学习特征字段 | 机器学习相关接口 |
+| `Create` | `extends Public` | 创建操作字段 | 创建资源的请求和响应 |
+| `Update` | `extends Public` | 更新操作字段 | 更新资源的请求和响应 |
+
+**使用方式**：
+- 在实体类的属性上使用 `@JsonView(Views.XXX.class)` 注解
+- 在控制器方法上使用 `@JsonView(Views.XXX.class)` 注解
+- 序列化时，只有被指定视图包含的字段会被返回
+
+**继承关系图**：
+```
+Public
+├── Internal
+│   └── Detail
+│       └── Admin
+├── MLFeatures
+├── Create
+└── Update
+```
+
+**作用**：
+1. **控制响应字段**：根据不同接口需求返回不同级别的字段
+2. **保护敏感信息**：确保敏感字段只在适当的接口中返回
+3. **优化响应大小**：减少不必要字段的传输，提高API性能
+4. **统一接口风格**：建立标准化的字段可见性规则
+
+
+### 视图接口使用
+
+1. **基础原则**：
+   - 从 `Public` 开始，根据需要逐步使用更高级别的视图
+   - 敏感字段应使用 `Admin` 视图保护
+   - 详细信息使用 `Detail` 视图
+
+2. **最佳实践**：
+   - 为每个实体类的字段明确指定视图级别
+   - 为每个控制器方法指定适当的返回视图
+   - 保持视图使用的一致性和可预测性
+
+3. **常见视图级别使用场景**：
+   - `Public`：公开查询接口，如商品列表、基本信息查询
+   - `Internal`：内部系统接口，如员工管理、订单处理
+   - `Detail`：详细信息接口，如商品详情、订单详情
+   - `Admin`：管理后台接口，如用户管理、系统设置
+   - `Create/Update`：创建/更新操作的请求和响应
+   - `MLFeatures`：机器学习数据采集和分析接口
+
+
+
