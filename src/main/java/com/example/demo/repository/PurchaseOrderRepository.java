@@ -95,7 +95,7 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Lo
     List<Object[]> findOrderStatusStatistics();
 
     // 查询即将到期的采购订单（7天内）
-    @Query(value = "SELECT * FROM purchase_order po WHERE po.expected_arrival BETWEEN CURRENT_DATE() AND DATEADD('DAY', 7, CURRENT_DATE()) AND po.order_status IN (0, 1)", nativeQuery = true)
+    @Query(value = "SELECT * FROM purchase_order po WHERE po.expected_arrival BETWEEN CURRENT_DATE() AND DATE_ADD(CURRENT_DATE(), INTERVAL 7 DAY) AND po.order_status IN (0, 1)", nativeQuery = true)
     List<PurchaseOrder> findUpcomingOrders();
 
     // 统计某个时间段的采购订单数量和总金额
