@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.entity.SaleRecord;
 import com.example.demo.entity.User;
 import com.example.demo.service.SaleRecordService;
+import com.example.demo.service.StockService;
 import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -32,6 +33,9 @@ public class SaleRecordController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private StockService stockService;
 
     @GetMapping("/test")
     public ResponseEntity<String> test() {
@@ -492,6 +496,187 @@ public class SaleRecordController {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "获取药品销售总量失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 按症状查询销售记录
+     * GET /api/sale-records/symptom/{symptomId}
+     */
+    @GetMapping("/symptom/{symptomId}")
+    public ResponseEntity<Map<String, Object>> getSalesBySymptom(
+            @PathVariable Integer symptomId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            // 获取所有销售记录
+            Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("saleTime").descending());
+            Page<SaleRecord> allSales = saleRecordService.findAll(pageable);
+            
+            // 过滤出包含指定症状的销售记录
+            List<SaleRecord> salesWithSymptom = allSales.getContent().stream()
+                    .filter(sale -> {
+                        List<com.example.demo.entity.Symptom> symptoms = sale.getSymptom();
+                        return symptoms != null && symptoms.stream()
+                                .anyMatch(symptom -> symptom.getId().equals(symptomId.longValue()));
+                    })
+                    .collect(Collectors.toList());
+
+            // 分页处理
+            int start = page * size;
+            int end = Math.min(start + size, salesWithSymptom.size());
+            List<SaleRecord> pagedSales = new ArrayList<>();
+            if (start < salesWithSymptom.size()) {
+                pagedSales = salesWithSymptom.subList(start, end);
+            }
+
+            // 构建响应
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Object> pageData = new HashMap<>();
+            pageData.put("content", pagedSales.stream()
+                    .map(this::createSaleRecordResponse)
+                    .collect(Collectors.toList()));
+            pageData.put("currentPage", page);
+            pageData.put("pageSize", size);
+            pageData.put("totalItems", salesWithSymptom.size());
+            pageData.put("totalPages", (int) Math.ceil((double) salesWithSymptom.size() / size));
+            
+            response.put("success", true);
+            response.put("message", "查询成功");
+            response.put("data", pageData);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 处理销售并更新库存
+     * PUT /api/sale-records/{id}/process
+     */
+    @PutMapping("/{id}/process")
+    public ResponseEntity<Map<String, Object>> processSaleRecord(
+            @PathVariable Long id) {
+        try {
+            // 获取销售记录
+            SaleRecord saleRecord = saleRecordService.findById(id);
+            if (saleRecord == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "销售记录不存在");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            // 提取药品信息和销售数量
+            if (saleRecord.getMedicine() == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "销售记录缺少药品信息");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+            Long medicineId = saleRecord.getMedicine().getId();
+            Integer quantity = saleRecord.getQuantity();
+
+            // 检查库存是否足够
+            boolean isAvailable = stockService.checkStockAvailability(medicineId, quantity);
+            if (!isAvailable) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "库存不足，无法处理销售");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+            // 减少库存
+            stockService.reduceStock(medicineId, quantity);
+
+            // 获取更新后的库存数量
+            Integer remainingStock = stockService.getTotalStock(medicineId);
+
+            // 构建响应
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Object> data = new HashMap<>();
+            data.put("saleRecordId", id);
+            data.put("medicineId", medicineId);
+            data.put("medicineName", saleRecord.getMedicine().getName());
+            data.put("processedQuantity", quantity);
+            data.put("remainingStock", remainingStock != null ? remainingStock : 0);
+            data.put("processedTime", LocalDateTime.now());
+            data.put("status", "PROCESSED");
+
+            response.put("success", true);
+            response.put("message", "销售处理成功，库存已更新");
+            response.put("data", data);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 出库单创建
+     * POST /api/sales/issuances
+     * @deprecated 该功能暂未实现，建议使用销售记录创建API（POST /api/sale-records）代替
+     */
+    @Deprecated
+    @PostMapping("/issuances")
+    public ResponseEntity<Map<String, Object>> createSalesIssuance(
+            @RequestBody Map<String, Object> issuanceData) {
+        try {
+            // 注：出库单功能需要在Service层添加Issuance相关的实现
+            // 目前可通过创建销售记录来实现类似功能
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "出库单功能暂未实现，请使用销售记录创建API代替");
+            response.put("data", Map.of(
+                    "note", "该API已标记为废弃，建议使用销售记录创建API（POST /api/sale-records）",
+                    "alternative", "/api/sale-records"
+            ));
+
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 出库单查询
+     * GET /api/sales/issuances
+     * @deprecated 该功能暂未实现，建议使用销售记录查询API代替
+     */
+    @Deprecated
+    @GetMapping("/issuances")
+    public ResponseEntity<Map<String, Object>> getSalesIssuances(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            // 注：出库单功能需要在Service层添加Issuance相关的实现
+            // 目前可通过查询销售记录来实现类似功能
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "出库单功能暂未实现，请使用销售记录查询API代替");
+            response.put("data", Map.of(
+                    "note", "该API已标记为废弃，建议使用销售记录查询API（GET /api/sale-records）",
+                    "alternative", "/api/sale-records"
+            ));
+
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }

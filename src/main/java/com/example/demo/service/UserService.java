@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 @Transactional
 public interface UserService extends BaseService<User, Long> {
+
     User findByUsername(String username);
     User login(String username, String password);
     User matchPassword(User user, String password);
@@ -20,4 +21,5 @@ public interface UserService extends BaseService<User, Long> {
     int countByUserStatus(Integer userStatus);
     int countByRole(String role);
     int countAll();
+
 }

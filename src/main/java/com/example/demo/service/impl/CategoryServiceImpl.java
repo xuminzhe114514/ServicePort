@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -185,5 +186,93 @@ public class CategoryServiceImpl extends BaseServiceImpl<Category, Long, Categor
             throw new IllegalStateException("该分类下存在药品，无法删除");
         }
         super.delete(id);
+    }
+
+    // 新增方法实现
+    @Override
+    public Page<Category> findActiveCategories(Pageable pageable) {
+        List<Category> allCategories = repository.findByStatusOrderBySortAsc(1);
+        int total = allCategories.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<Category> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = allCategories.subList(start, end);
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public Page<Category> findSubcategoriesByParentId(Long parentId, Pageable pageable) {
+        List<Category> allCategories = repository.findByParentId(parentId);
+        int total = allCategories.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<Category> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = allCategories.subList(start, end);
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public Map<Long, List<Category>> getCategoryHierarchy() {
+        List<Category> allCategories = repository.findAll();
+        return allCategories.stream()
+                .collect(Collectors.groupingBy(category -> category.getParentId() != null ? category.getParentId() : 0L));
+    }
+
+    @Override
+    public Page<Category> findCategoriesWithMedicines(Pageable pageable) {
+        List<Category> allCategories = repository.findAll();
+        List<Category> categoriesWithMedicines = allCategories.stream()
+                .filter(category -> {
+                    List<Medicine> medicines = repository.findMedicinesByCategoryId(category.getId());
+                    return medicines != null && !medicines.isEmpty();
+                })
+                .collect(Collectors.toList());
+
+        int total = categoriesWithMedicines.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<Category> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = categoriesWithMedicines.subList(start, end);
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public Map<String, Object> getCategoryStatistics(Long categoryId) {
+        Map<String, Object> stats = new HashMap<>();
+        Category category = repository.findById(categoryId).orElse(null);
+        if (category == null) {
+            return stats;
+        }
+        long medicineCount = repository.countMedicinesByCategoryId(categoryId);
+        stats.put("medicineCount", medicineCount);
+        Object saleAmountObj = repository.sumSaleAmountByCategoryId(categoryId);
+        Double saleAmount = saleAmountObj != null ? (saleAmountObj instanceof BigDecimal ? ((BigDecimal)saleAmountObj).doubleValue() : saleAmountObj instanceof Double ? (Double)saleAmountObj : 0.0) : 0.0;
+        stats.put("saleAmount", saleAmount);
+        List<Category> subcategories = repository.findByParentId(categoryId);
+        stats.put("subcategoryCount", subcategories.size());
+        stats.put("categoryId", category.getId());
+        stats.put("categoryName", category.getName());
+        stats.put("categoryLevel", category.getLevel());
+        stats.put("categoryStatus", category.getStatus());
+
+        return stats;
     }
 }

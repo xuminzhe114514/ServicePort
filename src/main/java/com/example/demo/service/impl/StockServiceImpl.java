@@ -12,7 +12,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -55,7 +57,8 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
 
     @Override
     public Integer getTotalStock(Long medicineId) {
-        return repository.sumQuantityByMedicineId(medicineId);
+        Object totalObj = repository.sumQuantityByMedicineId(medicineId);
+        return totalObj != null ? (totalObj instanceof Long ? ((Long)totalObj).intValue() : totalObj instanceof Integer ? (Integer)totalObj : 0) : 0;
     }
 
     @Override
@@ -231,7 +234,8 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
     @Override
     public Map<String, Object> getStockStatisticsByMedicine(Long medicineId) {
         // 获取总库存
-        Integer totalStock = repository.sumQuantityByMedicineId(medicineId);
+        Object totalStockObj = repository.sumQuantityByMedicineId(medicineId);
+        Integer totalStock = totalStockObj != null ? (totalStockObj instanceof Long ? ((Long)totalStockObj).intValue() : totalStockObj instanceof Integer ? (Integer)totalStockObj : 0) : 0;
 
         // 获取低库存信息（需要在内存中过滤）
         List<Stock> allStocks = repository.findByMedicineId(medicineId);
@@ -262,6 +266,7 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         return stats;
     }
 
+    @Override
     public Page<Stock> findByMedicineIdAndBatchNumber(Long medicineId, String batchNumber, Pageable pageable) {
         List<Stock> allStocks = repository.findByBatchNumber(batchNumber);
 
@@ -273,6 +278,7 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         return getPage(filtered, pageable, filtered::size);
     }
 
+    @Override
     public Page<Stock> findExpiredStock(Pageable pageable) {
         LocalDate now = LocalDate.now();
         List<Stock> allStocks = repository.findAll();
@@ -286,6 +292,7 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         return getPage(expiredStocks, pageable, expiredStocks::size);
     }
 
+    @Override
     public Page<Stock> findNearExpiryStock(int days, Pageable pageable) {
         LocalDate now = LocalDate.now();
         LocalDate endDate = now.plusDays(days);
@@ -297,5 +304,173 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
                 .collect(Collectors.toList());
 
         return getPage(filtered, pageable, filtered::size);
+    }
+
+    // 新增方法实现
+    @Override
+    public Double calculateStockTurnoverRate(String period) {
+        // 根据时间段计算库存周转率
+        LocalDateTime endDate = LocalDateTime.now();
+        LocalDateTime startDate;
+    
+        // 根据period参数设置开始日期
+        switch (period) {
+            case "week":
+                startDate = endDate.minusWeeks(1);
+                break;
+            case "month":
+                startDate = endDate.minusMonths(1);
+                break;
+            case "quarter":
+                startDate = endDate.minusMonths(3);
+                break;
+            case "year":
+                startDate = endDate.minusYears(1);
+                break;
+            default:
+                startDate = endDate.minusMonths(1);
+        }
+        
+        // 使用仓库方法计算库存周转率
+        List<Object[]> turnoverData = repository.calculateStockTurnoverRate(startDate, endDate);
+        
+        // 计算平均周转率
+        return turnoverData.stream()
+                .mapToDouble(obj -> {
+                    if (obj.length > 3) {
+                        Double turnoverRate = (Double) obj[3];
+                        return turnoverRate != null ? turnoverRate : 0;
+                    }
+                    return 0;
+                })
+                .average()
+                .orElse(0.0);
+    }
+
+    @Override
+    public Double calculateTotalStockValue() {
+        Object valueObj = repository.calculateTotalStockValue();
+        return valueObj != null ? (valueObj instanceof BigDecimal ? ((BigDecimal)valueObj).doubleValue() : valueObj instanceof Double ? (Double)valueObj : 0.0) : 0.0;
+    }
+
+    @Override
+    public Map<String, Object> getStockValueByCategory() {
+        List<Object[]> results = repository.calculateStockValueByCategory();
+        Map<String, Object> valueByCategory = new HashMap<>();
+        results.forEach(result -> {
+            String categoryName = result[0].toString();
+            Double value = Double.parseDouble(result[1].toString());
+            valueByCategory.put(categoryName, value);
+        });
+        return valueByCategory;
+    }
+
+    @Override
+    public Page<Stock> getStockAlerts(Pageable pageable) {
+        List<Stock> alerts = new ArrayList<>();
+        
+        // 低库存预警
+        List<Stock> lowStock = repository.findLowStock();
+        alerts.addAll(lowStock);
+        
+        // 即将过期预警
+        LocalDate now = LocalDate.now();
+        LocalDate thirtyDaysLater = now.plusDays(30);
+        List<Stock> expiringStock = repository.findExpiringStock(now, thirtyDaysLater);
+        alerts.addAll(expiringStock);
+        
+        int total = alerts.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<Stock> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = alerts.subList(start, end);
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public void transferStock(Long fromStockId, Long toStockId, Integer quantity) {
+        Stock fromStock = repository.findById(fromStockId).orElse(null);
+        Stock toStock = repository.findById(toStockId).orElse(null);
+        
+        if (fromStock == null || toStock == null) {
+            throw new IllegalArgumentException("库存记录不存在");
+        }
+        
+        if (fromStock.getQuantity() < quantity) {
+            throw new IllegalArgumentException("转出库存不足");
+        }
+        
+        // 减少转出库存
+        fromStock.setQuantity(fromStock.getQuantity() - quantity);
+        
+        // 增加转入库存
+        toStock.setQuantity(toStock.getQuantity() + quantity);
+        
+        repository.save(fromStock);
+        repository.save(toStock);
+    }
+
+    @Override
+    public void setMinimumStockLevel(Long medicineId, Integer minLevel) {
+        List<Stock> stocks = repository.findByMedicineId(medicineId);
+        stocks.forEach(stock -> {
+            stock.setWarningQuantity(minLevel);
+        });
+        repository.saveAll(stocks);
+    }
+
+    @Override
+    public Map<Long, Object> getStockInventoryReport() {
+        List<Stock> allStocks = repository.findAll();
+        Map<Long, Object> report = new HashMap<>();
+        
+        allStocks.forEach(stock -> {
+            Map<String, Object> stockInfo = new HashMap<>();
+            stockInfo.put("quantity", stock.getQuantity());
+            stockInfo.put("batchNumber", stock.getBatchNumber());
+            stockInfo.put("expirationDate", stock.getExpirationDate());
+            stockInfo.put("shelfLocation", stock.getShelfLocation());
+            stockInfo.put("status", stock.getStatus());
+            report.put(stock.getId(), stockInfo);
+        });
+        
+        return report;
+    }
+
+    @Override
+    public Page<Stock> findByStorageCondition(Integer condition, Pageable pageable) {
+        List<Stock> allStocks = repository.findAll().stream()
+                .filter(stock -> stock.getStatus() == 1)
+                .filter(stock -> {
+                    Medicine medicine = stock.getMedicine();
+                    return medicine != null && medicine.getStorageRequirement() != null && 
+                            medicine.getStorageRequirement().equals(condition);
+                })
+                .collect(Collectors.toList());
+
+        int total = allStocks.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<Stock> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = allStocks.subList(start, end);
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public Page<Stock> findByShelfLocationContaining(String location, Pageable pageable) {
+        List<Stock> stocks = repository.findByShelfLocationContaining(location);
+        return getPage(stocks, pageable, stocks::size);
     }
 }

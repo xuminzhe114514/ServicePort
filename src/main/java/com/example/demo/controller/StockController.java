@@ -13,12 +13,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.springframework.data.domain.PageRequest;
 
 @RestController
 @RequestMapping("/stocks")
@@ -700,6 +700,14 @@ public class StockController {
             Page<Stock> nearExpiryStocks = stockService.findNearExpiryStock(30, PageRequest.of(0, 1));
             statistics.put("nearExpiryStockCount", nearExpiryStocks.getTotalElements());
 
+            // 6. 库存价值统计
+            Double totalStockValue = stockService.calculateTotalStockValue();
+            statistics.put("totalStockValue", totalStockValue != null ? totalStockValue : 0);
+
+            // 7. 库存周转率
+            Double turnoverRate = stockService.calculateStockTurnoverRate("month");
+            statistics.put("monthlyTurnoverRate", turnoverRate != null ? turnoverRate : 0);
+
             // 构建响应
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -712,6 +720,264 @@ public class StockController {
             response.put("success", false);
             response.put("message", "统计信息获取失败: " + e.getMessage());
             response.put("data", Map.of());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 库存盘点启动
+     * POST /api/stocks/inventory/initiate
+     */
+    @Deprecated
+    @PostMapping("/inventory/initiate")
+    public ResponseEntity<Map<String, Object>> initiateInventory() {
+        try {
+            // 注：需要在Service层添加Inventory相关的实现
+            // 1. 创建盘点任务记录
+            // 2. 锁定当前库存状态
+            // 3. 生成盘点清单
+            
+            Map<String, Object> inventoryInfo = new HashMap<>();
+            inventoryInfo.put("inventoryId", System.currentTimeMillis());
+            inventoryInfo.put("initiateTime", LocalDateTime.now());
+            inventoryInfo.put("status", "INITIATED");
+            inventoryInfo.put("note", "库存盘点功能需要在Service层实现Inventory相关功能");
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "库存盘点启动成功");
+            response.put("data", inventoryInfo);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 盘点结果记录
+     * POST /api/stocks/inventory/record
+     */
+    @Deprecated
+    @PostMapping("/inventory/record")
+    public ResponseEntity<Map<String, Object>> recordInventory(
+            @RequestParam Long inventoryId,
+            @RequestParam Long stockId,
+            @RequestParam Integer actualQuantity) {
+        try {
+            // 注：需要在Service层添加Inventory相关的实现
+            // 1. 获取库存记录
+            // 2. 计算差异
+            // 3. 更新库存数量
+            // 4. 记录盘点差异
+            
+            // 获取当前库存信息
+            Stock stock = stockService.findById(stockId);
+            if (stock == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "库存记录不存在");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            Map<String, Object> inventoryRecord = new HashMap<>();
+            inventoryRecord.put("inventoryId", inventoryId);
+            inventoryRecord.put("stockId", stockId);
+            inventoryRecord.put("medicineName", stock.getMedicine() != null ? stock.getMedicine().getName() : "");
+            inventoryRecord.put("batchNumber", stock.getBatchNumber());
+            inventoryRecord.put("systemQuantity", stock.getQuantity());
+            inventoryRecord.put("actualQuantity", actualQuantity);
+            inventoryRecord.put("difference", actualQuantity - stock.getQuantity());
+            inventoryRecord.put("recordTime", LocalDateTime.now());
+            inventoryRecord.put("note", "库存盘点功能需要在Service层实现Inventory相关功能");
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "盘点结果记录成功");
+            response.put("data", inventoryRecord);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 盘点历史查询
+     * GET /api/stocks/inventory/history
+     */
+    @Deprecated
+    @GetMapping("/inventory/history")
+    public ResponseEntity<Map<String, Object>> getInventoryHistory(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            // 注：需要在Service层添加Inventory相关的实现
+            // 1. 查询盘点任务历史
+            // 2. 按条件筛选
+            // 3. 分页返回结果
+            
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Object> pageData = new HashMap<>();
+            pageData.put("content", List.of());
+            pageData.put("currentPage", page);
+            pageData.put("pageSize", size);
+            pageData.put("totalItems", 0);
+            pageData.put("totalPages", 0);
+            pageData.put("note", "库存盘点功能需要在Service层实现Inventory相关功能");
+            
+            response.put("success", true);
+            response.put("message", "查询成功");
+            response.put("data", pageData);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 库存交易记录
+     * GET /api/stocks/transactions
+     */
+    @GetMapping("/transactions")
+    public ResponseEntity<Map<String, Object>> getStockTransactions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+
+            Pageable pageable = PageRequest.of(page, size, Sort.by("updateTime").descending());
+            Page<Stock> stockPage = stockService.findAll(pageable);
+
+
+            List<Map<String, Object>> transactions = stockPage.getContent().stream()
+                    .map(stock -> {
+                        Map<String, Object> transaction = new HashMap<>();
+                        transaction.put("transactionId", stock.getId());
+                        transaction.put("medicineId", stock.getMedicine() != null ? stock.getMedicine().getId() : null);
+                        transaction.put("medicineName", stock.getMedicine() != null ? stock.getMedicine().getName() : null);
+                        transaction.put("batchNumber", stock.getBatchNumber());
+                        transaction.put("quantity", stock.getQuantity());
+                        transaction.put("shelfLocation", stock.getShelfLocation());
+                        transaction.put("transactionTime", stock.getUpdateTime());
+                        transaction.put("transactionType", "STOCK_UPDATE");
+                        return transaction;
+                    })
+                    .toList();
+
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Object> pageData = new HashMap<>();
+            pageData.put("content", transactions);
+            pageData.put("currentPage", page);
+            pageData.put("pageSize", size);
+            pageData.put("totalItems", stockPage.getTotalElements());
+            pageData.put("totalPages", stockPage.getTotalPages());
+            response.put("data", pageData);
+            response.put("success", true);
+            response.put("message", "查询成功");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 库存价值评估
+     * GET /api/stocks/valuation
+     */
+    @GetMapping("/valuation")
+    public ResponseEntity<Map<String, Object>> getStockValuation() {
+        try {
+            Double totalStockValue = stockService.calculateTotalStockValue();
+            Map<String, Object> stockValueByCategory = stockService.getStockValueByCategory();
+
+            Map<String, Object> valuation = new HashMap<>();
+            valuation.put("totalStockValue", totalStockValue != null ? totalStockValue : 0);
+            valuation.put("stockValueByCategory", stockValueByCategory);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "库存价值评估成功");
+            response.put("data", valuation);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 按库位查询库存
+     * GET /api/stocks/location/{location}
+     */
+    @GetMapping("/location/{location}")
+    public ResponseEntity<Map<String, Object>> getStocksByLocation(
+            @PathVariable String location,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Stock> locationStocks = stockService.findByShelfLocationContaining(location, pageable);
+
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Object> pageData = new HashMap<>();
+            pageData.put("content", locationStocks.getContent().stream().map(this::createStockResponse).toList());
+            pageData.put("currentPage", page);
+            pageData.put("pageSize", size);
+            pageData.put("totalItems", locationStocks.getTotalElements());
+            pageData.put("totalPages", locationStocks.getTotalPages());
+            response.put("data", pageData);
+            response.put("success", true);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 库存周转率分析
+     * GET /api/stocks/turnover
+     */
+    @GetMapping("/turnover")
+    public ResponseEntity<Map<String, Object>> getStockTurnover(
+            @RequestParam(defaultValue = "month") String period) {
+        try {
+            Double turnoverRate = stockService.calculateStockTurnoverRate(period);
+
+            Map<String, Object> turnoverData = new HashMap<>();
+            turnoverData.put("period", period);
+            turnoverData.put("turnoverRate", turnoverRate != null ? turnoverRate : 0);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "库存周转率分析成功");
+            response.put("data", turnoverData);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }

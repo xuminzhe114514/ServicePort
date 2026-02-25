@@ -2,7 +2,13 @@ package com.example.demo.service.impl;
 
 import com.example.demo.entity.PurchaseOrder;
 import com.example.demo.entity.User;
+import com.example.demo.entity.Medicine;
+import com.example.demo.entity.SaleRecord;
+import com.example.demo.entity.Stock;
 import com.example.demo.repository.PurchaseOrderRepository;
+import com.example.demo.repository.MedicineRepository;
+import com.example.demo.repository.SaleRecordRepository;
+import com.example.demo.repository.StockRepository;
 import com.example.demo.service.PurchaseOrderService;
 import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +35,15 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
 
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private MedicineRepository medicineRepository;
+    
+    @Autowired
+    private SaleRecordRepository saleRepository;
+    
+    @Autowired
+    private StockRepository stockRepository;
 
     @Override
     public PurchaseOrder findByOrderNo(String orderNo) {
@@ -110,14 +125,16 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
 
     @Override
     public Integer getTotalPurchasedQuantity(Long medicineId) {
-        Integer total = repository.sumPurchasedQuantityByMedicineId(medicineId);
-        return total != null ? total : 0;
+        Object totalObj = repository.sumPurchasedQuantityByMedicineId(medicineId);
+        Integer total = totalObj != null ? (totalObj instanceof Long ? ((Long)totalObj).intValue() : totalObj instanceof Integer ? (Integer)totalObj : 0) : 0;
+        return total;
     }
 
     @Override
     public Double getTotalPurchaseAmountByPeriod(LocalDateTime startTime, LocalDateTime endTime) {
-        Double total = repository.sumTotalAmountByPeriod(startTime, endTime);
-        return total != null ? total : 0.0;
+        Object totalObj = repository.sumTotalAmountByPeriod(startTime, endTime);
+        Double total = totalObj != null ? (totalObj instanceof BigDecimal ? ((BigDecimal)totalObj).doubleValue() : totalObj instanceof Double ? (Double)totalObj : 0.0) : 0.0;
+        return total;
     }
 
     @Override
@@ -411,5 +428,209 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
         result.put("monthlyStatistics", new ArrayList<>(monthlyStats.values()));
 
         return result;
+    }
+
+    // 新增方法实现
+    @Override
+    public Page<Map<String, Object>> getSupplierPurchaseStatistics(Pageable pageable) {
+        List<Object[]> results = repository.findSupplierPurchaseStatistics();
+        List<Map<String, Object>> supplierStats = results.stream().map(result -> {
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("supplier", result[0]);
+            stats.put("orderCount", result[1]);
+            stats.put("totalAmount", result[2]);
+            return stats;
+        }).collect(Collectors.toList());
+
+        int total = supplierStats.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<Map<String, Object>> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = supplierStats.subList(start, end);
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public Page<PurchaseOrder> findUpcomingOrders(Pageable pageable) {
+        List<PurchaseOrder> upcomingOrders = repository.findUpcomingOrders();
+        int total = upcomingOrders.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<PurchaseOrder> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = upcomingOrders.subList(start, end);
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public void batchConfirmOrders(List<Long> orderIds) {
+        List<PurchaseOrder> orders = repository.findAllById(orderIds);
+        orders.forEach(order -> {
+            if (order != null && order.isPending()) {
+                order.setOrderStatus(1);
+                repository.save(order);
+            }
+        });
+    }
+
+    @Override
+    public void batchCancelOrders(List<Long> orderIds) {
+        List<PurchaseOrder> orders = repository.findAllById(orderIds);
+        orders.forEach(order -> {
+            if (order != null && !order.isArrived() && !order.isCancelled()) {
+                order.setOrderStatus(3);
+                repository.save(order);
+            }
+        });
+    }
+
+    @Deprecated
+    @Override
+    public Page<Map<String, Object>> getPurchaseSuggestions(Pageable pageable) {
+        // 基于销售数据和库存水平生成采购建议
+        List<Map<String, Object>> suggestions = new ArrayList<>();
+        
+        // 获取所有药品
+        List<Medicine> allMedicines = medicineRepository.findByStatus(1);
+        
+        // 计算最近30天的销售数据
+        LocalDateTime endDate = LocalDateTime.now();
+        LocalDateTime startDate = endDate.minusDays(30);
+        
+        // 为每种药品生成采购建议
+        for (Medicine medicine : allMedicines) {
+            // 计算当前库存量
+            Object currentStockObj = stockRepository.sumQuantityByMedicineId(medicine.getId());
+            Integer currentStock = currentStockObj != null ? (currentStockObj instanceof Long ? ((Long)currentStockObj).intValue() : currentStockObj instanceof Integer ? (Integer)currentStockObj : 0) : 0;
+            
+            // 计算最近30天的平均日销售量
+            List<SaleRecord> recentSales = saleRepository.findByMedicineId(medicine.getId());
+            int totalRecentSales = recentSales.stream()
+                    .filter(sale -> sale.getSaleTime().isAfter(startDate))
+                    .mapToInt(SaleRecord::getQuantity)
+                    .sum();
+            double averageDailySales = recentSales.isEmpty() ? 0 : (double) totalRecentSales / 30;
+            
+            // 计算建议采购量（基于安全库存水平和销售预测）
+            int safetyStock = 10; // 默认安全库存
+            int suggestedOrderQuantity = 0;
+            
+            // 如果当前库存低于安全库存，生成采购建议
+            if (currentStock < safetyStock) {
+                // 建议采购量 = 安全库存 - 当前库存 + 预计30天销售量
+                suggestedOrderQuantity = safetyStock - currentStock + (int) (averageDailySales * 30);
+                
+                // 确保采购量为正数
+                if (suggestedOrderQuantity > 0) {
+                    Map<String, Object> suggestion = new HashMap<>();
+                    suggestion.put("medicineId", medicine.getId());
+                    suggestion.put("medicineName", medicine.getName());
+                    suggestion.put("currentStock", currentStock);
+                    suggestion.put("safetyStock", safetyStock);
+                    suggestion.put("averageDailySales", String.format("%.2f", averageDailySales));
+                    suggestion.put("suggestedOrderQuantity", suggestedOrderQuantity);
+                    suggestion.put("unitPrice", medicine.getPurchasePrice());
+                    suggestions.add(suggestion);
+                }
+            }
+        }
+
+        int total = suggestions.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<Map<String, Object>> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = suggestions.subList(start, end);
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public Page<Map<String, Object>> getPurchaseByCategory(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        List<PurchaseOrder> allOrders = repository.findByOrderTimeBetween(startDate, endDate);
+        Map<String, Map<String, Object>> categoryPurchase = new HashMap<>();
+
+        allOrders.forEach(order -> {
+            if (order.getMedicine() != null && order.getMedicine().getCategory() != null) {
+                String categoryName = order.getMedicine().getCategory().getName();
+                categoryPurchase.computeIfAbsent(categoryName, k -> {
+                    Map<String, Object> stats = new HashMap<>();
+                    stats.put("totalQuantity", 0);
+                    stats.put("totalAmount", 0.0);
+                    return stats;
+                });
+
+                Map<String, Object> stats = categoryPurchase.get(categoryName);
+                stats.put("totalQuantity", (Integer) stats.get("totalQuantity") + order.getQuantity());
+                stats.put("totalAmount", (Double) stats.get("totalAmount") + order.getTotalAmount().doubleValue());
+            }
+        });
+
+        List<Map<String, Object>> categoryStats = categoryPurchase.entrySet().stream()
+                .map(entry -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("category", entry.getKey());
+                    map.putAll(entry.getValue());
+                    return map;
+                })
+                .collect(Collectors.toList());
+
+        int total = categoryStats.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<Map<String, Object>> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = categoryStats.subList(start, end);
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public Map<String, Object> getOrderDetailsWithMedicine(Long orderId) {
+        PurchaseOrder order = repository.findById(orderId).orElse(null);
+        Map<String, Object> details = new HashMap<>();
+        
+        if (order != null) {
+            details.put("orderId", order.getId());
+            details.put("orderNo", order.getOrderNo());
+            details.put("orderStatus", order.getOrderStatus());
+            details.put("orderTime", order.getOrderTime());
+            details.put("expectedArrival", order.getExpectedArrival());
+            details.put("actualArrival", order.getActualArrival());
+            details.put("supplier", order.getSupplier());
+            details.put("quantity", order.getQuantity());
+            details.put("unitPrice", order.getUnitPrice());
+            details.put("totalAmount", order.getTotalAmount());
+            
+            if (order.getMedicine() != null) {
+                Map<String, Object> medicineInfo = new HashMap<>();
+                medicineInfo.put("medicineId", order.getMedicine().getId());
+                medicineInfo.put("medicineName", order.getMedicine().getName());
+                medicineInfo.put("specification", order.getMedicine().getSpecification());
+                medicineInfo.put("manufacturer", order.getMedicine().getManufacturer());
+                details.put("medicine", medicineInfo);
+            }
+        }
+        
+        return details;
     }
 }

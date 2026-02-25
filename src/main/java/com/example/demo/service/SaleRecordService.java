@@ -20,4 +20,13 @@ public interface SaleRecordService extends BaseService<SaleRecord, Long> {
     List<Map<String, Object>> getDailySalesReport(LocalDateTime startDate, LocalDateTime endDate);
     List<Map<String, Object>> getTopSellingMedicines(int limit, LocalDateTime startDate, LocalDateTime endDate);
     SaleRecord createSaleRecord(SaleRecord saleRecord, Long operatorId);
+
+    Page<SaleRecord> findByCustomerType(Integer customerType, Pageable pageable);
+    Page<Map<String, Object>> getSalesByCategory(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+    Page<Map<String, Object>> getSalesBySymptom(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+    Map<String, Object> getOperatorSalesPerformance(LocalDateTime startDate, LocalDateTime endDate);
+    Page<Map<String, Object>> getMonthlySalesTrend(int months, Pageable pageable);
+    Page<Map<String, Object>> getSalesPrediction(int days, Pageable pageable);
+    Page<SaleRecord> findPrescriptionSales(Pageable pageable);
+    Map<String, Object> getSalesStatisticsByPeriod(LocalDateTime startDate, LocalDateTime endDate);
 }

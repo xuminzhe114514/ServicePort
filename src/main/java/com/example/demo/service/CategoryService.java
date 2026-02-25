@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 @Transactional
 public interface CategoryService extends BaseService<Category, Long> {
+
     List<Category> findByParentId(Long parentId);
     List<Category> findByLevel(Integer level);
     List<Category> findRootCategories();
@@ -19,4 +20,11 @@ public interface CategoryService extends BaseService<Category, Long> {
     Map<Long, String> getCategoryPath(Long categoryId);
     Page<Category> searchCategories(String keyword, Pageable pageable);
     boolean hasAssociatedMedicines(Long categoryId);
+    
+    Page<Category> findActiveCategories(Pageable pageable);
+    Page<Category> findSubcategoriesByParentId(Long parentId, Pageable pageable);
+    Map<Long, List<Category>> getCategoryHierarchy();
+    Page<Category> findCategoriesWithMedicines(Pageable pageable);
+    Map<String, Object> getCategoryStatistics(Long categoryId);
+
 }

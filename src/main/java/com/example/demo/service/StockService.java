@@ -26,4 +26,14 @@ public interface StockService extends BaseService<Stock, Long> {
     Page<Stock> findByMedicineIdAndBatchNumber(Long medicineId, String batchNumber, Pageable pageable);
     Page<Stock> findExpiredStock(Pageable pageable);
     Page<Stock> findNearExpiryStock(int days, Pageable pageable);
+
+    Double calculateStockTurnoverRate(String period);
+    Double calculateTotalStockValue();
+    Map<String, Object> getStockValueByCategory();
+    Page<Stock> getStockAlerts(Pageable pageable);
+    void transferStock(Long fromStockId, Long toStockId, Integer quantity);
+    void setMinimumStockLevel(Long medicineId, Integer minLevel);
+    Map<Long, Object> getStockInventoryReport();
+    Page<Stock> findByStorageCondition(Integer condition, Pageable pageable);
+    Page<Stock> findByShelfLocationContaining(String location, Pageable pageable);
 }

@@ -1,6 +1,11 @@
 package com.example.demo.repository;
 
 import com.example.demo.entity.Medicine;
+import com.example.demo.entity.SaleRecord;
+import com.example.demo.entity.PurchaseOrder;
+import com.example.demo.entity.Stock;
+import com.example.demo.entity.PredictionResult;
+import com.example.demo.entity.Symptom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -70,4 +75,43 @@ public interface MedicineRepository extends JpaRepository<Medicine, Long> {
     // 统计药品按症状分类
     @Query("SELECT s.name, COUNT(m) FROM Medicine m JOIN m.symptoms s WHERE m.status = 1 GROUP BY s.id, s.name")
     List<Object[]> countMedicinesBySymptom();
+
+    // 根据药品ID查询关联的销售记录（包含详细信息）
+    @Query("SELECT sr FROM SaleRecord sr WHERE sr.medicine.id = :medicineId ORDER BY sr.saleTime DESC")
+    List<SaleRecord> findSaleRecordsByMedicineId(@Param("medicineId") Long medicineId);
+
+    // 根据药品ID查询关联的采购订单（包含详细信息）
+    @Query("SELECT po FROM PurchaseOrder po WHERE po.medicine.id = :medicineId ORDER BY po.orderTime DESC")
+    List<PurchaseOrder> findPurchaseOrdersByMedicineId(@Param("medicineId") Long medicineId);
+
+    // 根据药品ID查询关联的库存（包含详细信息）
+    @Query("SELECT s FROM Stock s WHERE s.medicine.id = :medicineId ORDER BY s.expirationDate ASC")
+    List<Stock> findStocksByMedicineId(@Param("medicineId") Long medicineId);
+
+    // 根据药品ID查询关联的预测结果（包含详细信息）
+    @Query("SELECT pr FROM PredictionResult pr WHERE pr.medicine.id = :medicineId ORDER BY pr.predictionDate DESC")
+    List<PredictionResult> findPredictionResultsByMedicineId(@Param("medicineId") Long medicineId);
+
+    // 根据药品ID查询关联的症状（包含详细信息）
+    @Query("SELECT m.symptoms FROM Medicine m WHERE m.id = :medicineId")
+    List<Symptom> findSymptomsByMedicineId(@Param("medicineId") Long medicineId);
+
+    // 统计药品的销售总量
+    @Query("SELECT COALESCE(SUM(sr.quantity), 0) FROM SaleRecord sr WHERE sr.medicine.id = :medicineId")
+    Long sumSaleQuantityByMedicineId(@Param("medicineId") Long medicineId);
+
+    // 统计药品的采购总量
+    @Query("SELECT COALESCE(SUM(po.quantity), 0) FROM PurchaseOrder po WHERE po.medicine.id = :medicineId AND po.orderStatus = 2")
+    Long sumPurchaseQuantityByMedicineId(@Param("medicineId") Long medicineId);
+
+    // 统计药品的当前库存量
+    @Query("SELECT COALESCE(SUM(s.quantity), 0) FROM Stock s WHERE s.medicine.id = :medicineId AND s.status = 1")
+    Long sumCurrentStockByMedicineId(@Param("medicineId") Long medicineId);
+
+    // 查询药品的销售趋势（按月份）
+    @Query("SELECT YEAR(sr.saleTime), MONTH(sr.saleTime), SUM(sr.quantity), SUM(sr.totalAmount) " +
+            "FROM SaleRecord sr WHERE sr.medicine.id = :medicineId " +
+            "GROUP BY YEAR(sr.saleTime), MONTH(sr.saleTime) " +
+            "ORDER BY YEAR(sr.saleTime), MONTH(sr.saleTime)")
+    List<Object[]> findSaleTrendByMedicineId(@Param("medicineId") Long medicineId);
 }

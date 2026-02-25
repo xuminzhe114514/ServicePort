@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.entity.Category;
 import com.example.demo.service.CategoryService;
+import com.example.demo.service.StockService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/categories")
@@ -24,6 +26,9 @@ public class CategoryController {
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private StockService stockService;
 
     @GetMapping("/test")
     public ResponseEntity<Map<String, Object>> test() {
@@ -627,6 +632,56 @@ public class CategoryController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    /**
+     * 分类库存汇总
+     * GET /api/categories/stock-summary
+     */
+    @GetMapping("/stock-summary")
+    public ResponseEntity<Map<String, Object>> getCategoryStockSummary() {
+        try {
+            List<Category> allCategories = categoryService.findAll();
+            Map<Long, Category> categoryMap = allCategories.stream()
+                    .collect(Collectors.toMap(Category::getId, category -> category));
+
+            Map<String, Object> stockValueByCategory = stockService.getStockValueByCategory();
+
+            // 构建分类库存汇总
+            List<Map<String, Object>> categoryStockList = new ArrayList<>();
+            stockValueByCategory.forEach((categoryIdStr, valueObj) -> {
+                try {
+                    Long categoryId = Long.parseLong(categoryIdStr);
+                    Category category = categoryMap.get(categoryId);
+                    if (category != null) {
+                        Map<String, Object> categoryStock = new HashMap<>();
+                        categoryStock.put("categoryId", categoryId);
+                        categoryStock.put("categoryName", category.getName());
+                        categoryStock.put("stockValue", valueObj);
+                        categoryStockList.add(categoryStock);
+                    }
+                } catch (NumberFormatException e) {
+                    
+                }
+            });
+
+            Map<String, Object> summary = new HashMap<>();
+            summary.put("categoryStockSummary", categoryStockList);
+            summary.put("totalCategories", categoryStockList.size());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "分类库存汇总成功");
+            response.put("data", summary);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
 
     /**
      * 创建分类响应对象

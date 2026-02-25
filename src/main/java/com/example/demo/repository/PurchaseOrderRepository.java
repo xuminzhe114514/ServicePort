@@ -1,6 +1,8 @@
 package com.example.demo.repository;
 
 import com.example.demo.entity.PurchaseOrder;
+import com.example.demo.entity.Medicine;
+import com.example.demo.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -43,12 +46,11 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Lo
 
     //统计某个药品的采购总量
     @Query("SELECT COALESCE(SUM(po.quantity), 0) FROM PurchaseOrder po WHERE po.medicine.id = :medicineId AND po.orderStatus = 2")
-    Integer sumPurchasedQuantityByMedicineId(@Param("medicineId") Long medicineId);
+    Long sumPurchasedQuantityByMedicineId(@Param("medicineId") Long medicineId);
 
     // 统计某个时间段的采购总额
-    @Query("SELECT COALESCE(SUM(po.totalAmount), 0.0) FROM PurchaseOrder po WHERE po.orderTime BETWEEN :startTime AND :endTime AND po.orderStatus = 2")
-    Double sumTotalAmountByPeriod(@Param("startTime") LocalDateTime startTime,
-                                  @Param("endTime") LocalDateTime endTime);
+    @Query("SELECT COALESCE(SUM(po.totalAmount), CAST(0 AS BigDecimal)) FROM PurchaseOrder po WHERE po.orderTime BETWEEN :startTime AND :endTime AND po.orderStatus = 2")
+    BigDecimal sumTotalAmountByPeriod(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 
     // 查找待处理的采购订单
     @Query("SELECT po FROM PurchaseOrder po WHERE po.orderStatus = 0 ORDER BY po.orderTime ASC")
@@ -67,4 +69,36 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Lo
             "       LOWER(m.name) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     List<PurchaseOrder> findByKeywordContaining(@Param("keyword") String keyword);
 
+    // 根据采购订单ID查询关联的药品详情
+    @Query("SELECT po.medicine FROM PurchaseOrder po WHERE po.id = :purchaseOrderId")
+    Medicine findMedicineByPurchaseOrderId(@Param("purchaseOrderId") Long purchaseOrderId);
+
+    // 根据采购订单ID查询关联的操作员详情
+    @Query("SELECT po.operator FROM PurchaseOrder po WHERE po.id = :purchaseOrderId")
+    User findOperatorByPurchaseOrderId(@Param("purchaseOrderId") Long purchaseOrderId);
+
+    // 根据供应商查询采购订单（带分页）
+    @Query("SELECT po FROM PurchaseOrder po WHERE po.supplier LIKE LOWER(CONCAT('%', :supplier, '%')) ORDER BY po.orderTime DESC")
+    Page<PurchaseOrder> findBySupplierWithPagination(@Param("supplier") String supplier, Pageable pageable);
+
+    // 统计供应商的采购总额
+    @Query("SELECT po.supplier, COUNT(po) as orderCount, SUM(po.totalAmount) as totalAmount " +
+            "FROM PurchaseOrder po WHERE po.orderStatus = 2 " +
+            "GROUP BY po.supplier " +
+            "ORDER BY totalAmount DESC")
+    List<Object[]> findSupplierPurchaseStatistics();
+
+    // 统计每个状态的采购订单数量
+    @Query("SELECT po.orderStatus, COUNT(po) as orderCount " +
+            "FROM PurchaseOrder po " +
+            "GROUP BY po.orderStatus")
+    List<Object[]> findOrderStatusStatistics();
+
+    // 查询即将到期的采购订单（7天内）
+    @Query(value = "SELECT * FROM purchase_order po WHERE po.expected_arrival BETWEEN CURRENT_DATE() AND DATEADD('DAY', 7, CURRENT_DATE()) AND po.order_status IN (0, 1)", nativeQuery = true)
+    List<PurchaseOrder> findUpcomingOrders();
+
+    // 统计某个时间段的采购订单数量和总金额
+    @Query("SELECT COUNT(po) as orderCount, COALESCE(SUM(po.totalAmount), CAST(0 AS BigDecimal)) as totalAmount FROM PurchaseOrder po WHERE po.orderTime BETWEEN :startTime AND :endTime AND po.orderStatus = 2")
+    Object[] countAndSumByPeriod(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 }

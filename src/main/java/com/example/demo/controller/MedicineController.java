@@ -2,10 +2,12 @@ package com.example.demo.controller;
 
 import com.example.demo.entity.Medicine;
 import com.example.demo.entity.PurchaseOrder;
+import com.example.demo.entity.Symptom;
 import com.example.demo.service.MedicineService;
 import com.example.demo.service.PurchaseOrderService;
 import com.example.demo.service.SaleRecordService;
 import com.example.demo.service.StockService;
+import com.example.demo.service.SymptomService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +38,11 @@ public class MedicineController {
 
     @Autowired
     private StockService  stockService;
+
+    @Autowired
+    private SymptomService symptomService;
+
+    private final int DEFAULT_WARNING_VALUE = 10;
 
     @GetMapping("/test")
     public ResponseEntity<Map<String, Object>> test() {
@@ -236,7 +243,7 @@ public class MedicineController {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
                 response.put("message", "药品存在采购订单");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
             Integer totalQuantity = saleRecordService.getTotalQuantityByMedicineId(id);
@@ -245,7 +252,7 @@ public class MedicineController {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
                 response.put("message", "药品存在未清理的销售记录");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
             Integer totalStocks = stockService.getTotalStock(id);
@@ -253,8 +260,8 @@ public class MedicineController {
             if (totalStocks > 0) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
-                response.put("message", "药品存在未清理的销售记录");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                response.put("message", "药品存在未清理的库存记录");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
             
 
@@ -730,6 +737,146 @@ public class MedicineController {
             response.put("totalItems", medicinePage.getTotalElements());
             response.put("totalPages", medicinePage.getTotalPages());
             response.put("data", simpleList);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 根据症状查询药品
+     * GET /api/medicines/symptom/{symptomId}
+     */
+    @GetMapping("/symptom/{symptomId}")
+    public ResponseEntity<Map<String, Object>> getMedicinesBySymptom(
+            @PathVariable Integer symptomId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            // 获取所有药品
+            List<Medicine> allMedicines = medicineService.findAll();
+            
+            // 过滤出包含指定症状的药品
+            List<Medicine> medicinesWithSymptom = allMedicines.stream()
+                    .filter(medicine -> {
+                        List<Symptom> symptoms = medicine.getSymptoms();
+                        return symptoms != null && symptoms.stream()
+                                .anyMatch(symptom -> symptom.getId().equals(symptomId));
+                    })
+                    .toList();
+
+            // 分页处理
+            int start = page * size;
+            int end = Math.min(start + size, medicinesWithSymptom.size());
+            List<Medicine> pageContent = medicinesWithSymptom.subList(
+                    Math.min(start, medicinesWithSymptom.size()), 
+                    end
+            );
+
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Object> pageData = new HashMap<>();
+            pageData.put("content", pageContent.stream().map(this::createMedicineResponse).toList());
+            pageData.put("currentPage", page);
+            pageData.put("pageSize", size);
+            pageData.put("totalItems", medicinesWithSymptom.size());
+            pageData.put("totalPages", (int) Math.ceil((double) medicinesWithSymptom.size() / size));
+            response.put("data", pageData);
+            response.put("success", true);
+            response.put("message", "查询成功");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 药品库存状态批量查询
+     * GET /api/medicines/stock-status
+     */
+    @GetMapping("/stock-status")
+    public ResponseEntity<Map<String, Object>> getMedicinesStockStatus(
+            @RequestParam List<Long> medicineIds) {
+        try {
+            Map<Long, Map<String, Object>> stockStatusMap = new HashMap<>();
+            
+            for (Long medicineId : medicineIds) {
+                Integer totalStock = stockService.getTotalStock(medicineId);
+                Map<String, Object> status = new HashMap<>();
+                status.put("totalStock", totalStock != null ? totalStock : 0);
+                status.put("isLowStock", totalStock != null && totalStock < DEFAULT_WARNING_VALUE); 
+                stockStatusMap.put(medicineId, status);
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", stockStatusMap);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 近效期药品查询
+     * GET /api/medicines/expiry-warning
+     */
+    @GetMapping("/expiry-warning")
+    public ResponseEntity<Map<String, Object>> getExpiringMedicines(
+            @RequestParam(defaultValue = "30") int daysThreshold,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Medicine> expiringMedicines = medicineService.findExpiringMedicines(daysThreshold, pageable);
+
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Object> pageData = new HashMap<>();
+            pageData.put("content", expiringMedicines.getContent().stream().map(this::createMedicineResponse).toList());
+            pageData.put("currentPage", page);
+            pageData.put("pageSize", size);
+            pageData.put("totalItems", expiringMedicines.getTotalElements());
+            pageData.put("totalPages", expiringMedicines.getTotalPages());
+            response.put("data", pageData);
+            response.put("success", true);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 药品库存价值评估
+     * GET /api/medicines/stock-value
+     */
+    @GetMapping("/stock-value")
+    public ResponseEntity<Map<String, Object>> getMedicineStockValue() {
+        try {
+            Double totalStockValue = stockService.calculateTotalStockValue();
+            Map<String, Object> stockValueByCategory = stockService.getStockValueByCategory();
+
+            Map<String, Object> statistics = new HashMap<>();
+            statistics.put("totalStockValue", totalStockValue != null ? totalStockValue : 0);
+            statistics.put("stockValueByCategory", stockValueByCategory);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", statistics);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {

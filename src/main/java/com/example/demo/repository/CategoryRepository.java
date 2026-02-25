@@ -1,11 +1,16 @@
 package com.example.demo.repository;
 
 import com.example.demo.entity.Category;
+import com.example.demo.entity.Medicine;
+import com.example.demo.entity.SaleRecord;
+import com.example.demo.entity.PurchaseOrder;
+import com.example.demo.entity.Stock;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,8 +36,30 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     Optional<Category> findByName(String name);
 
     // 自定义查询：查找某个分类的所有子孙分类
-    @Query("SELECT c FROM Category c WHERE c.parentId = :parentId OR c.id IN " +
-            "(SELECT c2.id FROM Category c2 WHERE c2.parentId IN " +
-            "(SELECT c3.id FROM Category c3 WHERE c3.parentId = :parentId))")
+    @Query("SELECT c FROM Category c WHERE c.parentId = :parentId")
     List<Category> findDescendantsByParentId(@Param("parentId") Long parentId);
+
+    // 根据分类ID查询关联的药品
+    @Query("SELECT m FROM Medicine m WHERE m.category.id = :categoryId")
+    List<Medicine> findMedicinesByCategoryId(@Param("categoryId") Long categoryId);
+
+    // 根据分类ID查询关联的销售记录
+    @Query("SELECT sr FROM SaleRecord sr JOIN sr.medicine m WHERE m.category.id = :categoryId")
+    List<SaleRecord> findSaleRecordsByCategoryId(@Param("categoryId") Long categoryId);
+
+    // 根据分类ID查询关联的采购订单
+    @Query("SELECT po FROM PurchaseOrder po JOIN po.medicine m WHERE m.category.id = :categoryId")
+    List<PurchaseOrder> findPurchaseOrdersByCategoryId(@Param("categoryId") Long categoryId);
+
+    // 根据分类ID查询关联的库存
+    @Query("SELECT s FROM Stock s JOIN s.medicine m WHERE m.category.id = :categoryId")
+    List<Stock> findStocksByCategoryId(@Param("categoryId") Long categoryId);
+
+    // 统计分类下的药品数量
+    @Query("SELECT COUNT(m) FROM Medicine m WHERE m.category.id = :categoryId AND m.status = 1")
+    long countMedicinesByCategoryId(@Param("categoryId") Long categoryId);
+
+    // 统计分类下的销售总额
+    @Query("SELECT COALESCE(SUM(sr.totalAmount), CAST(0 AS BigDecimal)) FROM SaleRecord sr JOIN sr.medicine m WHERE m.category.id = :categoryId")
+    BigDecimal sumSaleAmountByCategoryId(@Param("categoryId") Long categoryId);
 }

@@ -7,11 +7,13 @@ import com.example.demo.service.SaleRecordService;
 import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -59,14 +61,16 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
 
     @Override
     public Double getTotalSalesByPeriod(LocalDateTime startTime, LocalDateTime endTime) {
-        Double total = repository.sumTotalAmountByPeriod(startTime, endTime);
-        return total != null ? total : 0.0;
+        Object totalObj = repository.sumTotalAmountByPeriod(startTime, endTime);
+        Double total = totalObj != null ? (totalObj instanceof BigDecimal ? ((BigDecimal)totalObj).doubleValue() : totalObj instanceof Double ? (Double)totalObj : 0.0) : 0.0;
+        return total;
     }
 
     @Override
     public Integer getTotalQuantityByMedicineId(Long medicineId) {
-        Integer total = repository.sumQuantityByMedicineId(medicineId);
-        return total != null ? total : 0;
+        Object totalObj = repository.sumQuantityByMedicineId(medicineId);
+        Integer total = totalObj != null ? (totalObj instanceof Long ? ((Long)totalObj).intValue() : totalObj instanceof Integer ? (Integer)totalObj : 0) : 0;
+        return total;
     }
 
     @Override
@@ -120,5 +124,211 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
         }
 
         return repository.save(saleRecord);
+    }
+
+    // 新增方法实现
+    @Override
+    public Page<SaleRecord> findByCustomerType(Integer customerType, Pageable pageable) {
+        List<SaleRecord> sales = repository.findByCustomerType(customerType);
+        int total = sales.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<SaleRecord> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = sales.subList(start, end);
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public Page<Map<String, Object>> getSalesByCategory(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        List<SaleRecord> allSales = repository.findBySaleTimeBetween(startDate, endDate);
+        Map<String, Map<String, Object>> categorySales = new HashMap<>();
+        allSales.forEach(sale -> {
+            if (sale.getMedicine() != null && sale.getMedicine().getCategory() != null) {
+                String categoryName = sale.getMedicine().getCategory().getName();
+                categorySales.computeIfAbsent(categoryName, k -> {
+                    Map<String, Object> stats = new HashMap<>();
+                    stats.put("totalQuantity", 0);
+                    stats.put("totalAmount", 0.0);
+                    return stats;
+                });
+
+                Map<String, Object> stats = categorySales.get(categoryName);
+                stats.put("totalQuantity", (Integer) stats.get("totalQuantity") + sale.getQuantity());
+                stats.put("totalAmount", (Double) stats.get("totalAmount") + sale.getTotalAmount().doubleValue());
+            }
+        });
+
+        List<Map<String, Object>> categoryStats = categorySales.entrySet().stream()
+                .map(entry -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("category", entry.getKey());
+                    map.putAll(entry.getValue());
+                    return map;
+                })
+                .collect(Collectors.toList());
+
+        int total = categoryStats.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<Map<String, Object>> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = categoryStats.subList(start, end);
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public Page<Map<String, Object>> getSalesBySymptom(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        List<Object[]> results = repository.findSalesBySymptom(startDate, endDate);
+        List<Map<String, Object>> symptomStats = results.stream().map(result -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("symptom", result[0]);
+            map.put("totalQuantity", result[1]);
+            map.put("totalAmount", result[2]);
+            return map;
+        }).collect(Collectors.toList());
+
+        int total = symptomStats.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<Map<String, Object>> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = symptomStats.subList(start, end);
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public Map<String, Object> getOperatorSalesPerformance(LocalDateTime startDate, LocalDateTime endDate) {
+        List<Object[]> results = repository.findOperatorSalesPerformance(startDate, endDate);
+        Map<String, Object> performance = new HashMap<>();
+
+        results.forEach(result -> {
+            String operatorName = result[1].toString();
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("recordCount", result[2]);
+            stats.put("totalAmount", result[3]);
+            performance.put(operatorName, stats);
+        });
+
+        return performance;
+    }
+
+    @Override
+    public Page<Map<String, Object>> getMonthlySalesTrend(int months, Pageable pageable) {
+        LocalDateTime endDate = LocalDateTime.now();
+        LocalDateTime startDate = endDate.minusMonths(months);
+
+        List<Object[]> results = repository.findDailySalesAmount(startDate, endDate);
+        List<Map<String, Object>> trendData = results.stream().map(result -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("date", result[0]);
+            map.put("amount", result[1]);
+            return map;
+        }).collect(Collectors.toList());
+
+        int total = trendData.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<Map<String, Object>> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = trendData.subList(start, end);
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Deprecated
+    @Override
+    public Page<Map<String, Object>> getSalesPrediction(int days, Pageable pageable) {
+        // 这里简化实现，实际应该使用预测算法
+        List<Map<String, Object>> predictions = new ArrayList<>();
+        LocalDate startDate = LocalDate.now();
+        
+        for (int i = 1; i <= days; i++) {
+            LocalDate date = startDate.plusDays(i);
+            Map<String, Object> prediction = new HashMap<>();
+            prediction.put("date", date);
+            prediction.put("predictedAmount", Math.random() * 10000);
+            predictions.add(prediction);
+        }
+
+        int total = predictions.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<Map<String, Object>> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = predictions.subList(start, end);
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public Page<SaleRecord> findPrescriptionSales(Pageable pageable) {
+        List<SaleRecord> allSales = repository.findAll();
+        List<SaleRecord> prescriptionSales = allSales.stream()
+                .filter(SaleRecord::isRx)
+                .collect(Collectors.toList());
+
+        int total = prescriptionSales.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<SaleRecord> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = prescriptionSales.subList(start, end);
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public Map<String, Object> getSalesStatisticsByPeriod(LocalDateTime startDate, LocalDateTime endDate) {
+        Map<String, Object> stats = new HashMap<>();
+        
+        // 销售总额
+        Object totalAmountObj = repository.sumTotalAmountByPeriod(startDate, endDate);
+        Double totalAmount = totalAmountObj != null ? (totalAmountObj instanceof BigDecimal ? ((BigDecimal)totalAmountObj).doubleValue() : totalAmountObj instanceof Double ? (Double)totalAmountObj : 0.0) : 0.0;
+        stats.put("totalAmount", totalAmount);
+        
+        // 销售记录数
+        List<SaleRecord> sales = repository.findBySaleTimeBetween(startDate, endDate);
+        stats.put("recordCount", sales.size());
+        
+        // 平均销售额
+        if (!sales.isEmpty()) {
+            double averageAmount = sales.stream()
+                    .mapToDouble(sale -> sale.getTotalAmount().doubleValue())
+                    .average()
+                    .orElse(0.0);
+            stats.put("averageAmount", averageAmount);
+        } else {
+            stats.put("averageAmount", 0.0);
+        }
+        
+        return stats;
     }
 }

@@ -188,11 +188,110 @@ public class SymptomController {
                 response.put("message", "症状不存在");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
+
+            Page<Symptom> symptomsWithMedicines = symptomService.findByMedicineId(id.longValue(), PageRequest.of(0, 1));
+            if (symptomsWithMedicines.getTotalElements() > 0) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "该症状下存在关联药品，无法删除");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+            
             symptomService.delete(id);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "症状删除成功");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 获取症状关联的药品列表
+     * GET /api/symptoms/medicines/{symptomId}
+     */
+    @GetMapping("/medicines/{symptomId}")
+    public ResponseEntity<Map<String, Object>> getMedicinesBySymptom(
+            @PathVariable Integer symptomId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Symptom> symptomsWithMedicines = symptomService.findByMedicineId(symptomId.longValue(), pageable);
+            
+            Map<String, Object> response = new HashMap<>();
+            if (symptomsWithMedicines.getTotalElements() == 0) {
+                response.put("success", false);
+                response.put("message", "未找到关联的药品");
+                response.put("data", List.of());
+            } else {
+                response.put("success", true);
+                response.put("message", "查询成功");
+                Map<String, Object> pageData = new HashMap<>();
+                pageData.put("content", symptomsWithMedicines.getContent().stream()
+                        .map(symptom -> {
+                            Map<String, Object> symptomMap = new HashMap<>();
+                            symptomMap.put("id", symptom.getId());
+                            symptomMap.put("name", symptom.getName());
+                            return symptomMap;
+                        })
+                        .toList());
+                pageData.put("currentPage", page);
+                pageData.put("pageSize", size);
+                pageData.put("totalItems", symptomsWithMedicines.getTotalElements());
+                pageData.put("totalPages", symptomsWithMedicines.getTotalPages());
+                response.put("data", pageData);
+            }
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 获取症状相关的销售记录
+     * GET /api/symptoms/sales/{symptomId}
+     */
+    @GetMapping("/sales/{symptomId}")
+    public ResponseEntity<Map<String, Object>> getSalesBySymptom(
+            @PathVariable Integer symptomId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Symptom> symptomsWithSales = symptomService.findBySaleRecordId(symptomId.longValue(), pageable);
+            
+            Map<String, Object> response = new HashMap<>();
+            if (symptomsWithSales.getTotalElements() == 0) {
+                response.put("success", false);
+                response.put("message", "未找到关联的销售记录");
+                response.put("data", List.of());
+            } else {
+                response.put("success", true);
+                response.put("message", "查询成功");
+                Map<String, Object> pageData = new HashMap<>();
+                pageData.put("content", symptomsWithSales.getContent().stream()
+                        .map(symptom -> {
+                            Map<String, Object> symptomMap = new HashMap<>();
+                            symptomMap.put("id", symptom.getId());
+                            symptomMap.put("name", symptom.getName());
+                            return symptomMap;
+                        })
+                        .toList());
+                pageData.put("currentPage", page);
+                pageData.put("pageSize", size);
+                pageData.put("totalItems", symptomsWithSales.getTotalElements());
+                pageData.put("totalPages", symptomsWithSales.getTotalPages());
+                response.put("data", pageData);
+            }
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();

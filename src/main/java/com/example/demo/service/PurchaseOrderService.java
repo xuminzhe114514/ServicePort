@@ -7,9 +7,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 @Transactional
 public interface PurchaseOrderService extends BaseService<PurchaseOrder, Long> {
+
     PurchaseOrder findByOrderNo(String orderNo);
     Page<PurchaseOrder> findAll(Pageable pageable);
     Page<PurchaseOrder> findByOrderStatus(Integer orderStatus, Pageable pageable);
@@ -28,4 +30,13 @@ public interface PurchaseOrderService extends BaseService<PurchaseOrder, Long> {
     Map<String, Object> getOrderStatistics();
     Map<String, Long> countByStatus();
     Map<String, Object> getMonthlyStatistics(LocalDate startDate, LocalDate endDate);
+    
+    Page<Map<String, Object>> getSupplierPurchaseStatistics(Pageable pageable);
+    Page<PurchaseOrder> findUpcomingOrders(Pageable pageable);
+    void batchConfirmOrders(List<Long> orderIds);
+    void batchCancelOrders(List<Long> orderIds);
+    Page<Map<String, Object>> getPurchaseSuggestions(Pageable pageable);
+    Page<Map<String, Object>> getPurchaseByCategory(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+    Map<String, Object> getOrderDetailsWithMedicine(Long orderId);
+
 }

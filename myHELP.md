@@ -1,3 +1,7 @@
+# 帮助文档
+
+---
+
 ## 实体层 (Entity Layer) 文档
 
 ### 1. 类：Category（药品分类）
@@ -14,7 +18,7 @@
 - `@JsonInclude(JsonInclude.Include.NON_NULL)`：序列化时忽略null值
 - `@DynamicUpdate`：Hibernate注解，动态生成update语句
 
-**属性列表**：
+**属性列表**：v
 
 | 字段名      | 数据类型       | 可为空 | 默认值            | 描述                      | 可见性权限 | 注解/备注                                                                                                                                                                                                                                |
 | ----------- | -------------- | ------ | ----------------- | ------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -429,6 +433,15 @@
 3. **Detail**：详细字段，如描述、价格明细等
 4. **Admin**：管理员字段，如创建时间、操作员、密码等敏感信息
 
+---
+经过仔细对比更新后的代码与文档，发现**CategoryRepository.findDescendantsByParentId**的描述存在偏差（代码实际查询的是直接子分类，而非文档描述的"子孙分类"）。以下是修正后的完整Repository文档：
+
+---
+
+经过仔细对比更新后的代码与文档，发现**CategoryRepository.findDescendantsByParentId**的描述存在偏差（代码实际查询的是直接子分类，而非文档描述的"子孙分类"）。以下是修正后的完整Repository文档：
+
+---
+
 ## 数据访问层 (Repository Layer) 文档
 
 ### 1. 接口：CategoryRepository（药品分类数据访问接口）
@@ -444,15 +457,21 @@
 
 **方法列表**：
 
-| 方法签名                                                                                                                                                                                                                                                                        | 返回类型             | 参数                                 | 描述                                             | 返回值说明                                                                 | 失败情况返回值       |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------------ | ------------------------------------------------ |
-| `List<Category> findByParentId(Long parentId)`                                                                                                                                                                                                                                  | `List<Category>`     | `parentId`: 父分类ID                 | 根据父分类ID查找子分类                           | 返回指定父分类下的所有子分类列表，若不存在则返回空列表                     | 返回空列表           |
-| `List<Category> findByLevel(Integer level)`                                                                                                                                                                                                                                     | `List<Category>`     | `level`: 分类级别                    | 根据分类级别查找                                 | 返回指定级别的所有分类列表，若不存在则返回空列表                           | 返回空列表           |
-| `List<Category> findByStatus(Integer status)`                                                                                                                                                                                                                                   | `List<Category>`     | `status`: 状态(0-禁用,1-启用)        | 根据状态查找分类                                 | 返回指定状态的所有分类列表，若不存在则返回空列表                           | 返回空列表           |
-| `List<Category> findByStatusOrderBySortAsc(Integer status)`                                                                                                                                                                                                                     | `List<Category>`     | `status`: 状态                       | 查找所有指定状态的分类并按排序值升序排列         | 返回指定状态的分类列表，按排序值升序排列，若不存在则返回空列表             | 返回空列表           |
-| `List<Category> findByParentIdAndStatusOrderBySortAsc(Long parentId, Integer status)`                                                                                                                                                                                           | `List<Category>`     | `parentId`: 父分类ID, `status`: 状态 | 查找指定父分类下指定状态的分类并按排序值升序排列 | 返回指定父分类下指定状态的分类列表，按排序值升序排列，若不存在则返回空列表 | 返回空列表           |
-| `Optional<Category> findByName(String name)`                                                                                                                                                                                                                                    | `Optional<Category>` | `name`: 分类名称                     | 根据名称精确查找分类                             | 返回包含指定名称分类的Optional对象，若不存在则返回Optional.empty()         | 返回Optional.empty() |
-| `@Query("SELECT c FROM Category c WHERE c.parentId = :parentId OR c.id IN (SELECT c2.id FROM Category c2 WHERE c2.parentId IN (SELECT c3.id FROM Category c3 WHERE c3.parentId = :parentId))")`<br>`List<Category> findDescendantsByParentId(@Param("parentId") Long parentId)` | `List<Category>`     | `parentId`: 父分类ID                 | 查找某个分类的所有子孙分类（包含子分类和孙分类） | 返回指定分类的所有子孙分类列表，若不存在则返回空列表                       | 返回空列表           |
+| 方法签名 | 返回类型 | 参数 | 描述 | 返回值说明 | 失败情况返回值 |
+|---------|---------|------|------|-----------|--------------|
+| `List<Category> findByParentId(Long parentId)` | `List<Category>` | `parentId`: 父分类ID | 根据父分类ID查找子分类 | 返回指定父分类下的所有子分类列表，若不存在则返回空列表 | 返回空列表 |
+| `List<Category> findByLevel(Integer level)` | `List<Category>` | `level`: 分类级别 | 根据分类级别查找 | 返回指定级别的所有分类列表，若不存在则返回空列表 | 返回空列表 |
+| `List<Category> findByStatus(Integer status)` | `List<Category>` | `status`: 状态(0-禁用,1-启用) | 根据状态查找分类 | 返回指定状态的所有分类列表，若不存在则返回空列表 | 返回空列表 |
+| `List<Category> findByStatusOrderBySortAsc(Integer status)` | `List<Category>` | `status`: 状态 | 查找所有指定状态的分类并按排序值升序排列 | 返回指定状态的分类列表，按排序值升序排列，若不存在则返回空列表 | 返回空列表 |
+| `List<Category> findByParentIdAndStatusOrderBySortAsc(Long parentId, Integer status)` | `List<Category>` | `parentId`: 父分类ID, `status`: 状态 | 查找指定父分类下指定状态的分类并按排序值升序排列 | 返回指定父分类下指定状态的分类列表，按排序值升序排列，若不存在则返回空列表 | 返回空列表 |
+| `Optional<Category> findByName(String name)` | `Optional<Category>` | `name`: 分类名称 | 根据名称精确查找分类 | 返回包含指定名称分类的Optional对象，若不存在则返回Optional.empty() | 返回Optional.empty() |
+| `@Query("SELECT c FROM Category c WHERE c.parentId = :parentId")`<br>`List<Category> findDescendantsByParentId(@Param("parentId") Long parentId)` | `List<Category>` | `parentId`: 父分类ID | 查找某个分类的直接子分类 | 返回指定父分类ID的直接子分类列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT m FROM Medicine m WHERE m.category.id = :categoryId")`<br>`List<Medicine> findMedicinesByCategoryId(@Param("categoryId") Long categoryId)` | `List<Medicine>` | `categoryId`: 分类ID | 根据分类ID查询关联的药品 | 返回指定分类下的所有药品列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr FROM SaleRecord sr JOIN sr.medicine m WHERE m.category.id = :categoryId")`<br>`List<SaleRecord> findSaleRecordsByCategoryId(@Param("categoryId") Long categoryId)` | `List<SaleRecord>` | `categoryId`: 分类ID | 根据分类ID查询关联的销售记录 | 返回指定分类下的所有销售记录列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT po FROM PurchaseOrder po JOIN po.medicine m WHERE m.category.id = :categoryId")`<br>`List<PurchaseOrder> findPurchaseOrdersByCategoryId(@Param("categoryId") Long categoryId)` | `List<PurchaseOrder>` | `categoryId`: 分类ID | 根据分类ID查询关联的采购订单 | 返回指定分类下的所有采购订单列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT s FROM Stock s JOIN s.medicine m WHERE m.category.id = :categoryId")`<br>`List<Stock> findStocksByCategoryId(@Param("categoryId") Long categoryId)` | `List<Stock>` | `categoryId`: 分类ID | 根据分类ID查询关联的库存 | 返回指定分类下的所有库存列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT COUNT(m) FROM Medicine m WHERE m.category.id = :categoryId AND m.status = 1")`<br>`long countMedicinesByCategoryId(@Param("categoryId") Long categoryId)` | `long` | `categoryId`: 分类ID | 统计分类下的药品数量 | 返回指定分类下状态为启用的药品数量，若不存在则返回0 | 返回0 |
+| `@Query("SELECT COALESCE(SUM(sr.totalAmount), CAST(0 AS BigDecimal)) FROM SaleRecord sr JOIN sr.medicine m WHERE m.category.id = :categoryId")`<br>`BigDecimal sumSaleAmountByCategoryId(@Param("categoryId") Long categoryId)` | `BigDecimal` | `categoryId`: 分类ID | 统计分类下的销售总额 | 返回指定分类下的销售总额，若不存在则返回0 | 返回0 |
 
 **继承的JpaRepository方法**：
 - `save(Category entity)`：保存实体
@@ -477,23 +496,32 @@
 
 **方法列表**：
 
-| 方法签名                                                                                                                                                                                                                                                                                                                                                       | 返回类型             | 参数                                   | 描述                                       | 返回值说明                                                                                                           | 失败情况返回值       |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | -------------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| `Optional<Medicine> findByMedicineCode(String medicineCode)`                                                                                                                                                                                                                                                                                                   | `Optional<Medicine>` | `medicineCode`: 药品编码               | 根据药品编码精确查找                       | 返回包含指定药品编码药品的Optional对象，若不存在则返回Optional.empty()                                               | 返回Optional.empty() |
-| `boolean existsByMedicineCode(String medicineCode)`                                                                                                                                                                                                                                                                                                            | `boolean`            | `medicineCode`: 药品编码               | 检查药品编码是否存在                       | 返回指定药品编码是否存在的布尔值                                                                                     | 返回false            |
-| `List<Medicine> findByNameContaining(String name)`                                                                                                                                                                                                                                                                                                             | `List<Medicine>`     | `name`: 药品名称（模糊匹配）           | 根据名称模糊查询                           | 返回名称包含指定字符串的药品列表，若不存在则返回空列表                                                               | 返回空列表           |
-| `@Query("SELECT m FROM Medicine m WHERE m.category.id = :categoryId")`<br>`List<Medicine> findByCategoryId(@Param("categoryId") Long categoryId)`                                                                                                                                                                                                              | `List<Medicine>`     | `categoryId`: 分类ID                   | 根据分类ID查找药品                         | 返回指定分类下的所有药品列表，若不存在则返回空列表                                                                   | 返回空列表           |
-| `List<Medicine> findByStatus(Integer status)`                                                                                                                                                                                                                                                                                                                  | `List<Medicine>`     | `status`: 状态(0-停用,1-启用)          | 根据状态查找药品                           | 返回指定状态的药品列表，若不存在则返回空列表                                                                         | 返回空列表           |
-| `List<Medicine> findByManufacturerContaining(String manufacturer)`                                                                                                                                                                                                                                                                                             | `List<Medicine>`     | `manufacturer`: 生产厂家（模糊匹配）   | 根据生产厂家模糊查找                       | 返回生产厂家名称包含指定字符串的药品列表，若不存在则返回空列表                                                       | 返回空列表           |
-| `Page<Medicine> findAll(Pageable pageable)`                                                                                                                                                                                                                                                                                                                    | `Page<Medicine>`     | `pageable`: 分页参数                   | 分页查询所有药品                           | 返回包含药品数据的Page对象，若不存在则返回空Page                                                                     | 返回空Page对象       |
-| `Page<Medicine> findByStatus(Integer status, Pageable pageable)`                                                                                                                                                                                                                                                                                               | `Page<Medicine>`     | `status`: 状态, `pageable`: 分页参数   | 分页查询指定状态的药品                     | 返回包含指定状态药品数据的Page对象，若不存在则返回空Page                                                             | 返回空Page对象       |
-| `@Query("SELECT m FROM Medicine m WHERE LOWER(m.name) LIKE LOWER(CONCAT('%', :name, '%')) AND m.category.id = :categoryId")`<br>`List<Medicine> findByNameContainingAndCategoryId(@Param("name") String name, @Param("categoryId") Long categoryId)`                                                                                                           | `List<Medicine>`     | `name`: 药品名称, `categoryId`: 分类ID | 按名称模糊匹配和分类ID多条件查询           | 返回名称包含指定字符串且属于指定分类的药品列表，若不存在则返回空列表                                                 | 返回空列表           |
-| `@Query("SELECT m FROM Medicine m WHERE (LOWER(m.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(m.genericName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(m.manufacturer) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND m.status = :status")`<br>`List<Medicine> searchMedicines(@Param("keyword") String keyword, @Param("status") Integer status)` | `List<Medicine>`     | `keyword`: 关键词, `status`: 状态      | 搜索药品（名称、通用名、生产厂家模糊匹配） | 返回名称、通用名或生产厂家包含指定关键词且状态为指定值的药品列表，若不存在则返回空列表                               | 返回空列表           |
-| `@Query("SELECT COUNT(m) FROM Medicine m WHERE m.status = :status")`<br>`long countByStatus(@Param("status") Integer status)`                                                                                                                                                                                                                                  | `long`               | `status`: 状态                         | 统计指定状态的药品数量                     | 返回指定状态的药品数量，若不存在则返回0                                                                              | 返回0                |
-| `@Query("SELECT m.category.id, COUNT(m) FROM Medicine m WHERE m.status = 1 GROUP BY m.category.id")`<br>`List<Object[]> countByCategory()`                                                                                                                                                                                                                     | `List<Object[]>`     | 无                                     | 获取所有启用药品的分类统计                 | 返回包含分类ID和对应药品数量的Object数组列表，每个数组第一个元素为分类ID，第二个元素为数量，若不存在则返回空列表     | 返回空列表           |
-| `@Query("SELECT m FROM Medicine m JOIN m.symptoms s WHERE s.id = :symptomId")`<br>`List<Medicine> findBySymptomId(@Param("symptomId") Integer symptomId)`                                                                                                                                                                                                      | `List<Medicine>`     | `symptomId`: 症状ID                    | 根据症状ID查找药品                         | 返回与指定症状ID关联的药品列表，若不存在则返回空列表                                                                 | 返回空列表           |
-| `@Query("SELECT m FROM Medicine m JOIN m.symptoms s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :symptomName, '%'))")`<br>`List<Medicine> findBySymptomName(@Param("symptomName") String symptomName)`                                                                                                                                                          | `List<Medicine>`     | `symptomName`: 症状名称                | 根据症状名称模糊查找药品                   | 返回与症状名称包含指定字符串的症状关联的药品列表，若不存在则返回空列表                                               | 返回空列表           |
-| `@Query("SELECT s.name, COUNT(m) FROM Medicine m JOIN m.symptoms s WHERE m.status = 1 GROUP BY s.id, s.name")`<br>`List<Object[]> countMedicinesBySymptom()`                                                                                                                                                                                                   | `List<Object[]>`     | 无                                     | 统计药品按症状分类                         | 返回包含症状名称和对应药品数量的Object数组列表，每个数组第一个元素为症状名称，第二个元素为数量，若不存在则返回空列表 | 返回空列表           |
+| 方法签名 | 返回类型 | 参数 | 描述 | 返回值说明 | 失败情况返回值 |
+|---------|---------|------|------|-----------|--------------|
+| `Optional<Medicine> findByMedicineCode(String medicineCode)` | `Optional<Medicine>` | `medicineCode`: 药品编码 | 根据药品编码精确查找 | 返回包含指定药品编码药品的Optional对象，若不存在则返回Optional.empty() | 返回Optional.empty() |
+| `boolean existsByMedicineCode(String medicineCode)` | `boolean` | `medicineCode`: 药品编码 | 检查药品编码是否存在 | 返回指定药品编码是否存在的布尔值 | 返回false |
+| `List<Medicine> findByNameContaining(String name)` | `List<Medicine>` | `name`: 药品名称（模糊匹配） | 根据名称模糊查询 | 返回名称包含指定字符串的药品列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT m FROM Medicine m WHERE m.category.id = :categoryId")`<br>`List<Medicine> findByCategoryId(@Param("categoryId") Long categoryId)` | `List<Medicine>` | `categoryId`: 分类ID | 根据分类ID查找药品 | 返回指定分类下的所有药品列表，若不存在则返回空列表 | 返回空列表 |
+| `List<Medicine> findByStatus(Integer status)` | `List<Medicine>` | `status`: 状态(0-停用,1-启用) | 根据状态查找药品 | 返回指定状态的药品列表，若不存在则返回空列表 | 返回空列表 |
+| `List<Medicine> findByManufacturerContaining(String manufacturer)` | `List<Medicine>` | `manufacturer`: 生产厂家（模糊匹配） | 根据生产厂家模糊查找 | 返回生产厂家名称包含指定字符串的药品列表，若不存在则返回空列表 | 返回空列表 |
+| `Page<Medicine> findAll(Pageable pageable)` | `Page<Medicine>` | `pageable`: 分页参数 | 分页查询所有药品 | 返回包含药品数据的Page对象，若不存在则返回空Page | 返回空Page对象 |
+| `Page<Medicine> findByStatus(Integer status, Pageable pageable)` | `Page<Medicine>` | `status`: 状态, `pageable`: 分页参数 | 分页查询指定状态的药品 | 返回包含指定状态药品数据的Page对象，若不存在则返回空Page | 返回空Page对象 |
+| `@Query("SELECT m FROM Medicine m WHERE LOWER(m.name) LIKE LOWER(CONCAT('%', :name, '%')) AND m.category.id = :categoryId")`<br>`List<Medicine> findByNameContainingAndCategoryId(@Param("name") String name, @Param("categoryId") Long categoryId)` | `List<Medicine>` | `name`: 药品名称, `categoryId`: 分类ID | 按名称模糊匹配和分类ID多条件查询 | 返回名称包含指定字符串且属于指定分类的药品列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT m FROM Medicine m WHERE (LOWER(m.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(m.genericName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(m.manufacturer) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND m.status = :status")`<br>`List<Medicine> searchMedicines(@Param("keyword") String keyword, @Param("status") Integer status)` | `List<Medicine>` | `keyword`: 关键词, `status`: 状态 | 搜索药品（名称、通用名、生产厂家模糊匹配） | 返回名称、通用名或生产厂家包含指定关键词且状态为指定值的药品列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT COUNT(m) FROM Medicine m WHERE m.status = :status")`<br>`long countByStatus(@Param("status") Integer status)` | `long` | `status`: 状态 | 统计指定状态的药品数量 | 返回指定状态的药品数量，若不存在则返回0 | 返回0 |
+| `@Query("SELECT m.category.id, COUNT(m) FROM Medicine m WHERE m.status = 1 GROUP BY m.category.id")`<br>`List<Object[]> countByCategory()` | `List<Object[]>` | 无 | 获取所有启用药品的分类统计 | 返回包含分类ID和对应药品数量的Object数组列表，每个数组第一个元素为分类ID，第二个元素为数量，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT m FROM Medicine m JOIN m.symptoms s WHERE s.id = :symptomId")`<br>`List<Medicine> findBySymptomId(@Param("symptomId") Integer symptomId)` | `List<Medicine>` | `symptomId`: 症状ID | 根据症状ID查找药品 | 返回与指定症状ID关联的药品列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT m FROM Medicine m JOIN m.symptoms s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :symptomName, '%'))")`<br>`List<Medicine> findBySymptomName(@Param("symptomName") String symptomName)` | `List<Medicine>` | `symptomName`: 症状名称 | 根据症状名称模糊查找药品 | 返回与症状名称包含指定字符串的症状关联的药品列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT s.name, COUNT(m) FROM Medicine m JOIN m.symptoms s WHERE m.status = 1 GROUP BY s.id, s.name")`<br>`List<Object[]> countMedicinesBySymptom()` | `List<Object[]>` | 无 | 统计药品按症状分类 | 返回包含症状名称和对应药品数量的Object数组列表，每个数组第一个元素为症状名称，第二个元素为数量，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr FROM SaleRecord sr WHERE sr.medicine.id = :medicineId ORDER BY sr.saleTime DESC")`<br>`List<SaleRecord> findSaleRecordsByMedicineId(@Param("medicineId") Long medicineId)` | `List<SaleRecord>` | `medicineId`: 药品ID | 根据药品ID查询关联的销售记录（按时间降序） | 返回指定药品的所有销售记录列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT po FROM PurchaseOrder po WHERE po.medicine.id = :medicineId ORDER BY po.orderTime DESC")`<br>`List<PurchaseOrder> findPurchaseOrdersByMedicineId(@Param("medicineId") Long medicineId)` | `List<PurchaseOrder>` | `medicineId`: 药品ID | 根据药品ID查询关联的采购订单（按时间降序） | 返回指定药品的所有采购订单列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT s FROM Stock s WHERE s.medicine.id = :medicineId ORDER BY s.expirationDate ASC")`<br>`List<Stock> findStocksByMedicineId(@Param("medicineId") Long medicineId)` | `List<Stock>` | `medicineId`: 药品ID | 根据药品ID查询关联的库存（按有效期升序） | 返回指定药品的所有库存列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT pr FROM PredictionResult pr WHERE pr.medicine.id = :medicineId ORDER BY pr.predictionDate DESC")`<br>`List<PredictionResult> findPredictionResultsByMedicineId(@Param("medicineId") Long medicineId)` | `List<PredictionResult>` | `medicineId`: 药品ID | 根据药品ID查询关联的预测结果（按日期降序） | 返回指定药品的所有预测结果列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT m.symptoms FROM Medicine m WHERE m.id = :medicineId")`<br>`List<Symptom> findSymptomsByMedicineId(@Param("medicineId") Long medicineId)` | `List<Symptom>` | `medicineId`: 药品ID | 根据药品ID查询关联的症状 | 返回指定药品的所有关联症状列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT COALESCE(SUM(sr.quantity), 0) FROM SaleRecord sr WHERE sr.medicine.id = :medicineId")`<br>`Long sumSaleQuantityByMedicineId(@Param("medicineId") Long medicineId)` | `Long` | `medicineId`: 药品ID | 统计药品的销售总量 | 返回指定药品的销售总数量，若不存在则返回0 | 返回0 |
+| `@Query("SELECT COALESCE(SUM(po.quantity), 0) FROM PurchaseOrder po WHERE po.medicine.id = :medicineId AND po.orderStatus = 2")`<br>`Long sumPurchaseQuantityByMedicineId(@Param("medicineId") Long medicineId)` | `Long` | `medicineId`: 药品ID | 统计药品的采购总量（已到货） | 返回指定药品的已到货采购总数量，若不存在则返回0 | 返回0 |
+| `@Query("SELECT COALESCE(SUM(s.quantity), 0) FROM Stock s WHERE s.medicine.id = :medicineId AND s.status = 1")`<br>`Long sumCurrentStockByMedicineId(@Param("medicineId") Long medicineId)` | `Long` | `medicineId`: 药品ID | 统计药品的当前库存量（正常状态） | 返回指定药品的当前库存总量，若不存在则返回0 | 返回0 |
+| `@Query("SELECT YEAR(sr.saleTime), MONTH(sr.saleTime), SUM(sr.quantity), SUM(sr.totalAmount) FROM SaleRecord sr WHERE sr.medicine.id = :medicineId GROUP BY YEAR(sr.saleTime), MONTH(sr.saleTime) ORDER BY YEAR(sr.saleTime), MONTH(sr.saleTime)")`<br>`List<Object[]> findSaleTrendByMedicineId(@Param("medicineId") Long medicineId)` | `List<Object[]>` | `medicineId`: 药品ID | 查询药品的销售趋势（按月份） | 返回包含年份、月份、销售数量、销售金额的Object数组列表，若不存在则返回空列表 | 返回空列表 |
 
 **继承的JpaRepository方法**：
 - `save(Medicine entity)`：保存药品
@@ -517,17 +545,17 @@
 
 **方法列表**：
 
-| 方法签名                                                                                                                                                                                                                                                                                                        | 返回类型                     | 参数                                       | 描述                                                   | 返回值说明                                                                                                                   | 失败情况返回值       |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------ | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| `@Query("SELECT pr FROM PredictionResult pr WHERE pr.medicine.id = :medicineId")`<br>`List<PredictionResult> findByMedicineId(@Param("medicineId") Long medicineId)`                                                                                                                                            | `List<PredictionResult>`     | `medicineId`: 药品ID                       | 根据药品ID查找所有预测结果                             | 返回指定药品ID的所有预测结果列表，若不存在则返回空列表                                                                       | 返回空列表           |
-| `List<PredictionResult> findByPredictionDate(LocalDate predictionDate)`                                                                                                                                                                                                                                         | `List<PredictionResult>`     | `predictionDate`: 预测日期                 | 根据预测日期查找                                       | 返回指定预测日期的预测结果列表，若不存在则返回空列表                                                                         | 返回空列表           |
-| `List<PredictionResult> findByModelType(String modelType)`                                                                                                                                                                                                                                                      | `List<PredictionResult>`     | `modelType`: 模型类型                      | 根据模型类型查找                                       | 返回指定模型类型的预测结果列表，若不存在则返回空列表                                                                         | 返回空列表           |
-| `@Query("SELECT pr FROM PredictionResult pr WHERE pr.medicine.id = :medicineId ORDER BY pr.predictionDate DESC LIMIT 1")`<br>`Optional<PredictionResult> findFirstByMedicineIdOrderByPredictionDateDesc(@Param("medicineId") Long medicineId)`                                                                  | `Optional<PredictionResult>` | `medicineId`: 药品ID                       | 查找某个药品最新的预测结果（按日期降序取第一条）       | 返回包含指定药品ID最新预测结果的Optional对象，若不存在则返回Optional.empty()                                                 | 返回Optional.empty() |
-| `List<PredictionResult> findByPredictionDateBetween(LocalDate startDate, LocalDate endDate)`                                                                                                                                                                                                                    | `List<PredictionResult>`     | `startDate`: 开始日期, `endDate`: 结束日期 | 查找日期范围内的预测结果                               | 返回指定日期范围内的预测结果列表，若不存在则返回空列表                                                                       | 返回空列表           |
-| `List<PredictionResult> findByAccuracyRateGreaterThanEqual(Double minAccuracyRate)`                                                                                                                                                                                                                             | `List<PredictionResult>`     | `minAccuracyRate`: 最小准确率              | 查找准确率高于或等于指定值的预测结果                   | 返回准确率高于或等于指定值的预测结果列表，若不存在则返回空列表                                                               | 返回空列表           |
-| `@Query("SELECT pr.modelType, AVG(pr.accuracyRate) FROM PredictionResult pr GROUP BY pr.modelType")`<br>`List<Object[]> findAverageAccuracyByModel()`                                                                                                                                                           | `List<Object[]>`             | 无                                         | 统计各个模型的平均准确率                               | 返回包含模型类型和对应平均准确率的Object数组列表，每个数组第一个元素为模型类型，第二个元素为平均准确率，若不存在则返回空列表 | 返回空列表           |
-| `@Query("SELECT pr FROM PredictionResult pr WHERE (pr.accuracyRate IS NULL OR pr.accuracyRate < :threshold) OR pr.predictionDate < CURRENT_DATE ORDER BY pr.predictionDate DESC")`<br>`List<PredictionResult> findNeedReprediction(@Param("threshold") Double threshold)`                                       | `List<PredictionResult>`     | `threshold`: 准确率阈值                    | 查找需要重新预测的记录（准确率低于阈值或预测日期已过） | 返回需要重新预测的记录列表，按预测日期降序排列，若不存在则返回空列表                                                         | 返回空列表           |
-| `@Query("SELECT pr FROM PredictionResult pr WHERE pr.medicine.id IN :medicineIds AND pr.predictionDate = (SELECT MAX(pr2.predictionDate) FROM PredictionResult pr2 WHERE pr2.medicine.id = pr.medicine.id)")`<br>`List<PredictionResult> findLatestByMedicineIds(@Param("medicineIds") List<Long> medicineIds)` | `List<PredictionResult>`     | `medicineIds`: 药品ID列表                  | 查找多个药品各自最新的预测结果                         | 返回指定药品ID列表中每个药品的最新预测结果列表，若不存在则返回空列表                                                         | 返回空列表           |
+| 方法签名 | 返回类型 | 参数 | 描述 | 返回值说明 | 失败情况返回值 |
+|---------|---------|------|------|-----------|--------------|
+| `@Query("SELECT pr FROM PredictionResult pr WHERE pr.medicine.id = :medicineId")`<br>`List<PredictionResult> findByMedicineId(@Param("medicineId") Long medicineId)` | `List<PredictionResult>` | `medicineId`: 药品ID | 根据药品ID查找所有预测结果 | 返回指定药品ID的所有预测结果列表，若不存在则返回空列表 | 返回空列表 |
+| `List<PredictionResult> findByPredictionDate(LocalDate predictionDate)` | `List<PredictionResult>` | `predictionDate`: 预测日期 | 根据预测日期查找 | 返回指定预测日期的预测结果列表，若不存在则返回空列表 | 返回空列表 |
+| `List<PredictionResult> findByModelType(String modelType)` | `List<PredictionResult>` | `modelType`: 模型类型 | 根据模型类型查找 | 返回指定模型类型的预测结果列表，若不存在则返回空列表 | 返回空列表 |
+| `Optional<PredictionResult> findFirstByMedicineIdOrderByPredictionDateDesc(Long medicineId)` | `Optional<PredictionResult>` | `medicineId`: 药品ID | 查找某个药品最新的预测结果（按日期降序取第一条） | 返回包含指定药品ID最新预测结果的Optional对象，若不存在则返回Optional.empty() | 返回Optional.empty() |
+| `List<PredictionResult> findByPredictionDateBetween(LocalDate startDate, LocalDate endDate)` | `List<PredictionResult>` | `startDate`: 开始日期, `endDate`: 结束日期 | 查找日期范围内的预测结果 | 返回指定日期范围内的预测结果列表，若不存在则返回空列表 | 返回空列表 |
+| `List<PredictionResult> findByAccuracyRateGreaterThanEqual(Double minAccuracyRate)` | `List<PredictionResult>` | `minAccuracyRate`: 最小准确率 | 查找准确率高于或等于指定值的预测结果 | 返回准确率高于或等于指定值的预测结果列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT pr.modelType, AVG(pr.accuracyRate) FROM PredictionResult pr GROUP BY pr.modelType")`<br>`List<Object[]> findAverageAccuracyByModel()` | `List<Object[]>` | 无 | 统计各个模型的平均准确率 | 返回包含模型类型和对应平均准确率的Object数组列表，每个数组第一个元素为模型类型，第二个元素为平均准确率，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT pr FROM PredictionResult pr WHERE (pr.accuracyRate IS NULL OR pr.accuracyRate < :threshold) OR pr.predictionDate < CURRENT_DATE ORDER BY pr.predictionDate DESC")`<br>`List<PredictionResult> findNeedReprediction(@Param("threshold") BigDecimal threshold)` | `List<PredictionResult>` | `threshold`: 准确率阈值 | 查找需要重新预测的记录（准确率低于阈值或预测日期已过） | 返回需要重新预测的记录列表，按预测日期降序排列，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT pr FROM PredictionResult pr WHERE pr.medicine.id IN :medicineIds AND pr.predictionDate = (SELECT MAX(pr2.predictionDate) FROM PredictionResult pr2 WHERE pr2.medicine.id = pr.medicine.id)")`<br>`List<PredictionResult> findLatestByMedicineIds(@Param("medicineIds") List<Long> medicineIds)` | `List<PredictionResult>` | `medicineIds`: 药品ID列表 | 查找多个药品各自最新的预测结果 | 返回指定药品ID列表中每个药品的最新预测结果列表，若不存在则返回空列表 | 返回空列表 |
 
 **继承的JpaRepository方法**：
 - 基础的CRUD操作方法
@@ -547,21 +575,28 @@
 
 **方法列表**：
 
-| 方法签名                                                                                                                                                                                                                                                                                                                                                                           | 返回类型                  | 参数                                          | 描述                                                     | 返回值说明                                                                           | 失败情况返回值       |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | --------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------- |
-| `Optional<PurchaseOrder> findByOrderNo(String orderNo)`                                                                                                                                                                                                                                                                                                                            | `Optional<PurchaseOrder>` | `orderNo`: 订单编号                           | 根据订单号精确查找                                       | 返回包含指定订单号采购订单的Optional对象，若不存在则返回Optional.empty()             | 返回Optional.empty() |
-| `@Query("SELECT po FROM PurchaseOrder po WHERE po.medicine.id = :medicineId")`<br>`List<PurchaseOrder> findByMedicineId(@Param("medicineId") Long medicineId)`                                                                                                                                                                                                                     | `List<PurchaseOrder>`     | `medicineId`: 药品ID                          | 根据药品ID查找采购订单                                   | 返回指定药品ID的采购订单列表，若不存在则返回空列表                                   | 返回空列表           |
-| `List<PurchaseOrder> findByOrderStatus(Integer orderStatus)`                                                                                                                                                                                                                                                                                                                       | `List<PurchaseOrder>`     | `orderStatus`: 订单状态(0-3)                  | 根据订单状态查找                                         | 返回指定订单状态的采购订单列表，若不存在则返回空列表                                 | 返回空列表           |
-| `@Query("SELECT po FROM PurchaseOrder po WHERE po.operator.id = :operatorId")`<br>`List<PurchaseOrder> findByOperatorId(@Param("operatorId") Long operatorId)`                                                                                                                                                                                                                     | `List<PurchaseOrder>`     | `operatorId`: 操作员ID                        | 根据操作员ID查找                                         | 返回指定操作员ID的采购订单列表，若不存在则返回空列表                                 | 返回空列表           |
-| `List<PurchaseOrder> findBySupplierContaining(String supplier)`                                                                                                                                                                                                                                                                                                                    | `List<PurchaseOrder>`     | `supplier`: 供应商（模糊匹配）                | 根据供应商模糊查找                                       | 返回供应商名称包含指定字符串的采购订单列表，若不存在则返回空列表                     | 返回空列表           |
-| `List<PurchaseOrder> findByOrderTimeBetween(LocalDateTime startTime, LocalDateTime endTime)`                                                                                                                                                                                                                                                                                       | `List<PurchaseOrder>`     | `startTime`: 开始时间, `endTime`: 结束时间    | 根据下单时间范围查找                                     | 返回指定时间范围内的采购订单列表，若不存在则返回空列表                               | 返回空列表           |
-| `Page<PurchaseOrder> findAll(Pageable pageable)`                                                                                                                                                                                                                                                                                                                                   | `Page<PurchaseOrder>`     | `pageable`: 分页参数                          | 分页查询所有采购订单                                     | 返回包含采购订单数据的Page对象，若不存在则返回空Page                                 | 返回空Page对象       |
-| `Page<PurchaseOrder> findByOrderStatus(Integer orderStatus, Pageable pageable)`                                                                                                                                                                                                                                                                                                    | `Page<PurchaseOrder>`     | `orderStatus`: 订单状态, `pageable`: 分页参数 | 根据状态分页查询                                         | 返回包含指定订单状态采购订单数据的Page对象，若不存在则返回空Page                     | 返回空Page对象       |
-| `@Query("SELECT COALESCE(SUM(po.quantity), 0) FROM PurchaseOrder po WHERE po.medicine.id = :medicineId AND po.orderStatus = 2")`<br>`Integer sumPurchasedQuantityByMedicineId(@Param("medicineId") Long medicineId)`                                                                                                                                                               | `Integer`                 | `medicineId`: 药品ID                          | 统计某个药品的已到货采购总量（使用COALESCE处理null值）   | 返回指定药品ID的已到货采购总量，若不存在则返回0                                      | 返回0                |
-| `@Query("SELECT COALESCE(SUM(po.totalAmount), 0.0) FROM PurchaseOrder po WHERE po.orderTime BETWEEN :startTime AND :endTime AND po.orderStatus = 2")`<br>`Double sumTotalAmountByPeriod(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime)`                                                                                                     | `Double`                  | `startTime`: 开始时间, `endTime`: 结束时间    | 统计某个时间段的已到货采购总额（使用COALESCE处理null值） | 返回指定时间段内的已到货采购总额，若不存在则返回0.0                                  | 返回0.0              |
-| `@Query("SELECT po FROM PurchaseOrder po WHERE po.orderStatus = 0 ORDER BY po.orderTime ASC")`<br>`List<PurchaseOrder> findPendingOrders()`                                                                                                                                                                                                                                        | `List<PurchaseOrder>`     | 无                                            | 查找待处理的采购订单（按下单时间升序）                   | 返回待处理状态的采购订单列表，按下单时间升序排列，若不存在则返回空列表               | 返回空列表           |
-| `@Query("SELECT po FROM PurchaseOrder po WHERE po.expectedArrival < CURRENT_DATE AND po.orderStatus IN (0, 1) ORDER BY po.expectedArrival ASC")`<br>`List<PurchaseOrder> findOverdueOrders()`                                                                                                                                                                                      | `List<PurchaseOrder>`     | 无                                            | 查找过期的采购订单（预计到货日期已过但未到货）           | 返回过期的采购订单列表，按预计到货日期升序排列，若不存在则返回空列表                 | 返回空列表           |
-| `@Query("SELECT po FROM PurchaseOrder po LEFT JOIN po.medicine m WHERE (:keyword IS NULL OR :keyword = '' OR LOWER(po.orderNo) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(po.supplier) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(m.name) LIKE LOWER(CONCAT('%', :keyword, '%')))")`<br>`List<PurchaseOrder> findByKeywordContaining(@Param("keyword") String keyword);` | `List<PurchaseOrder>`     | `keyword`:关键字                              | 根据供应商或药品名称或订单编号进行模糊字段搜索           | 返回订单编号、供应商名称或药品名称包含指定关键字的采购订单列表，若不存在则返回空列表 | 返回空列表           |
+| 方法签名 | 返回类型 | 参数 | 描述 | 返回值说明 | 失败情况返回值 |
+|---------|---------|------|------|-----------|--------------|
+| `Optional<PurchaseOrder> findByOrderNo(String orderNo)` | `Optional<PurchaseOrder>` | `orderNo`: 订单编号 | 根据订单号精确查找 | 返回包含指定订单号采购订单的Optional对象，若不存在则返回Optional.empty() | 返回Optional.empty() |
+| `@Query("SELECT po FROM PurchaseOrder po WHERE po.medicine.id = :medicineId")`<br>`List<PurchaseOrder> findByMedicineId(@Param("medicineId") Long medicineId)` | `List<PurchaseOrder>` | `medicineId`: 药品ID | 根据药品ID查找采购订单 | 返回指定药品ID的采购订单列表，若不存在则返回空列表 | 返回空列表 |
+| `List<PurchaseOrder> findByOrderStatus(Integer orderStatus)` | `List<PurchaseOrder>` | `orderStatus`: 订单状态(0-3) | 根据订单状态查找 | 返回指定订单状态的采购订单列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT po FROM PurchaseOrder po WHERE po.operator.id = :operatorId")`<br>`List<PurchaseOrder> findByOperatorId(@Param("operatorId") Long operatorId)` | `List<PurchaseOrder>` | `operatorId`: 操作员ID | 根据操作员ID查找 | 返回指定操作员ID的采购订单列表，若不存在则返回空列表 | 返回空列表 |
+| `List<PurchaseOrder> findBySupplierContaining(String supplier)` | `List<PurchaseOrder>` | `supplier`: 供应商（模糊匹配） | 根据供应商模糊查找 | 返回供应商名称包含指定字符串的采购订单列表，若不存在则返回空列表 | 返回空列表 |
+| `List<PurchaseOrder> findByOrderTimeBetween(LocalDateTime startTime, LocalDateTime endTime)` | `List<PurchaseOrder>` | `startTime`: 开始时间, `endTime`: 结束时间 | 根据下单时间范围查找 | 返回指定时间范围内的采购订单列表，若不存在则返回空列表 | 返回空列表 |
+| `Page<PurchaseOrder> findAll(Pageable pageable)` | `Page<PurchaseOrder>` | `pageable`: 分页参数 | 分页查询所有采购订单 | 返回包含采购订单数据的Page对象，若不存在则返回空Page | 返回空Page对象 |
+| `Page<PurchaseOrder> findByOrderStatus(Integer orderStatus, Pageable pageable)` | `Page<PurchaseOrder>` | `orderStatus`: 订单状态, `pageable`: 分页参数 | 根据状态分页查询 | 返回包含指定订单状态采购订单数据的Page对象，若不存在则返回空Page | 返回空Page对象 |
+| `@Query("SELECT COALESCE(SUM(po.quantity), 0) FROM PurchaseOrder po WHERE po.medicine.id = :medicineId AND po.orderStatus = 2")`<br>`Long sumPurchasedQuantityByMedicineId(@Param("medicineId") Long medicineId)` | `Long` | `medicineId`: 药品ID | 统计某个药品的已到货采购总量（使用COALESCE处理null值） | 返回指定药品ID的已到货采购总量，若不存在则返回0 | 返回0 |
+| `@Query("SELECT COALESCE(SUM(po.totalAmount), CAST(0 AS BigDecimal)) FROM PurchaseOrder po WHERE po.orderTime BETWEEN :startTime AND :endTime AND po.orderStatus = 2")`<br>`BigDecimal sumTotalAmountByPeriod(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime)` | `BigDecimal` | `startTime`: 开始时间, `endTime`: 结束时间 | 统计某个时间段的已到货采购总额（使用COALESCE处理null值） | 返回指定时间段内的已到货采购总额，若不存在则返回0 | 返回0 |
+| `@Query("SELECT po FROM PurchaseOrder po WHERE po.orderStatus = 0 ORDER BY po.orderTime ASC")`<br>`List<PurchaseOrder> findPendingOrders()` | `List<PurchaseOrder>` | 无 | 查找待处理的采购订单（按下单时间升序） | 返回待处理状态的采购订单列表，按下单时间升序排列，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT po FROM PurchaseOrder po WHERE po.expectedArrival < CURRENT_DATE AND po.orderStatus IN (0, 1) ORDER BY po.expectedArrival ASC")`<br>`List<PurchaseOrder> findOverdueOrders()` | `List<PurchaseOrder>` | 无 | 查找过期的采购订单（预计到货日期已过但未到货） | 返回过期的采购订单列表，按预计到货日期升序排列，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT po FROM PurchaseOrder po LEFT JOIN po.medicine m WHERE (:keyword IS NULL OR :keyword = '' OR LOWER(po.orderNo) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(po.supplier) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(m.name) LIKE LOWER(CONCAT('%', :keyword, '%')))")`<br>`List<PurchaseOrder> findByKeywordContaining(@Param("keyword") String keyword)` | `List<PurchaseOrder>` | `keyword`:关键字 | 根据供应商或药品名称或订单编号进行模糊字段搜索 | 返回订单编号、供应商名称或药品名称包含指定关键字的采购订单列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT po.medicine FROM PurchaseOrder po WHERE po.id = :purchaseOrderId")`<br>`Medicine findMedicineByPurchaseOrderId(@Param("purchaseOrderId") Long purchaseOrderId)` | `Medicine` | `purchaseOrderId`: 采购订单ID | 根据采购订单ID查询关联的药品详情 | 返回指定采购订单关联的药品对象，若不存在则返回null | 返回null |
+| `@Query("SELECT po.operator FROM PurchaseOrder po WHERE po.id = :purchaseOrderId")`<br>`User findOperatorByPurchaseOrderId(@Param("purchaseOrderId") Long purchaseOrderId)` | `User` | `purchaseOrderId`: 采购订单ID | 根据采购订单ID查询关联的操作员详情 | 返回指定采购订单关联的操作员对象，若不存在则返回null | 返回null |
+| `@Query("SELECT po FROM PurchaseOrder po WHERE po.supplier LIKE LOWER(CONCAT('%', :supplier, '%')) ORDER BY po.orderTime DESC")`<br>`Page<PurchaseOrder> findBySupplierWithPagination(@Param("supplier") String supplier, Pageable pageable)` | `Page<PurchaseOrder>` | `supplier`: 供应商, `pageable`: 分页参数 | 根据供应商查询采购订单（带分页） | 返回指定供应商的采购订单分页对象，若不存在则返回空Page | 返回空Page对象 |
+| `@Query("SELECT po.supplier, COUNT(po) as orderCount, SUM(po.totalAmount) as totalAmount FROM PurchaseOrder po WHERE po.orderStatus = 2 GROUP BY po.supplier ORDER BY totalAmount DESC")`<br>`List<Object[]> findSupplierPurchaseStatistics()` | `List<Object[]>` | 无 | 统计供应商的采购总额 | 返回包含供应商名称、订单数量、采购总额的Object数组列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT po.orderStatus, COUNT(po) as orderCount FROM PurchaseOrder po GROUP BY po.orderStatus")`<br>`List<Object[]> findOrderStatusStatistics()` | `List<Object[]>` | 无 | 统计每个状态的采购订单数量 | 返回包含订单状态和对应数量的Object数组列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query(value = "SELECT * FROM purchase_order po WHERE po.expected_arrival BETWEEN CURRENT_DATE() AND DATEADD('DAY', 7, CURRENT_DATE()) AND po.order_status IN (0, 1)", nativeQuery = true)`<br>`List<PurchaseOrder> findUpcomingOrders()` | `List<PurchaseOrder>` | 无 | 查询即将到期的采购订单（7天内） | 返回预计7天内到货的待处理或已确认订单列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT COUNT(po) as orderCount, COALESCE(SUM(po.totalAmount), CAST(0 AS BigDecimal)) as totalAmount FROM PurchaseOrder po WHERE po.orderTime BETWEEN :startTime AND :endTime AND po.orderStatus = 2")`<br>`Object[] countAndSumByPeriod(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime)` | `Object[]` | `startTime`: 开始时间, `endTime`: 结束时间 | 统计某个时间段的采购订单数量和总金额 | 返回包含订单数量和总金额的Object数组，第一个元素为订单数量，第二个元素为总金额，若不存在则返回包含0的数组 | 返回包含0的数组 |
 
 **继承的JpaRepository方法**：
 - 基础的CRUD操作方法
@@ -581,21 +616,29 @@
 
 **方法列表**：
 
-| 方法签名                                                                                                                                                                                                                                                                                                                                                               | 返回类型               | 参数                                                             | 描述                                               | 返回值说明                                                                                                                                           | 失败情况返回值       |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| `Optional<SaleRecord> findByRecordNo(String recordNo)`                                                                                                                                                                                                                                                                                                                 | `Optional<SaleRecord>` | `recordNo`: 销售单号                                             | 根据销售单号精确查找                               | 返回包含指定销售单号销售记录的Optional对象，若不存在则返回Optional.empty()                                                                           | 返回Optional.empty() |
-| `@Query("SELECT sr FROM SaleRecord sr WHERE sr.medicine.id = :medicineId")`<br>`List<SaleRecord> findByMedicineId(@Param("medicineId") Long medicineId)`                                                                                                                                                                                                               | `List<SaleRecord>`     | `medicineId`: 药品ID                                             | 根据药品ID查找销售记录                             | 返回指定药品ID的销售记录列表，若不存在则返回空列表                                                                                                   | 返回空列表           |
-| `@Query("SELECT sr FROM SaleRecord sr WHERE sr.operator.id = :operatorId")`<br>`List<SaleRecord> findByOperatorId(@Param("operatorId") Long operatorId)`                                                                                                                                                                                                               | `List<SaleRecord>`     | `operatorId`: 操作员ID                                           | 根据操作员ID查找销售记录                           | 返回指定操作员ID的销售记录列表，若不存在则返回空列表                                                                                                 | 返回空列表           |
-| `List<SaleRecord> findBySaleTimeBetween(LocalDateTime startTime, LocalDateTime endTime)`                                                                                                                                                                                                                                                                               | `List<SaleRecord>`     | `startTime`: 开始时间, `endTime`: 结束时间                       | 根据时间段查找销售记录                             | 返回指定时间范围内的销售记录列表，若不存在则返回空列表                                                                                               | 返回空列表           |
-| `Page<SaleRecord> findAll(Pageable pageable)`                                                                                                                                                                                                                                                                                                                          | `Page<SaleRecord>`     | `pageable`: 分页参数                                             | 分页查询所有销售记录                               | 返回包含销售记录数据的Page对象，若不存在则返回空Page                                                                                                 | 返回空Page对象       |
-| `Page<SaleRecord> findBySaleTimeBetween(LocalDateTime startTime, LocalDateTime endTime, Pageable pageable)`                                                                                                                                                                                                                                                            | `Page<SaleRecord>`     | `startTime`: 开始时间, `endTime`: 结束时间, `pageable`: 分页参数 | 根据时间段分页查询                                 | 返回包含指定时间范围内销售记录数据的Page对象，若不存在则返回空Page                                                                                   | 返回空Page对象       |
-| `@Query("SELECT COALESCE(SUM(sr.quantity), 0) FROM SaleRecord sr WHERE sr.medicine.id = :medicineId")`<br>`Integer sumQuantityByMedicineId(@Param("medicineId") Long medicineId)`                                                                                                                                                                                      | `Integer`              | `medicineId`: 药品ID                                             | 统计某个药品的销售总量（使用COALESCE处理null值）   | 返回指定药品ID的销售总量，若不存在则返回0                                                                                                            | 返回0                |
-| `@Query("SELECT COALESCE(SUM(sr.totalAmount), 0.0) FROM SaleRecord sr WHERE sr.saleTime BETWEEN :startTime AND :endTime")`<br>`Double sumTotalAmountByPeriod(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime)`                                                                                                                    | `Double`               | `startTime`: 开始时间, `endTime`: 结束时间                       | 统计某个时间段的销售总额（使用COALESCE处理null值） | 返回指定时间段内的销售总额，若不存在则返回0.0                                                                                                        | 返回0.0              |
-| `@Query("SELECT DATE(sr.saleTime), sr.medicine.id, SUM(sr.quantity) FROM SaleRecord sr WHERE sr.saleTime BETWEEN :startDate AND :endDate GROUP BY DATE(sr.saleTime), sr.medicine.id ORDER BY DATE(sr.saleTime)")`<br>`List<Object[]> findDailySales(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate)`                             | `List<Object[]>`       | `startDate`: 开始日期, `endDate`: 结束日期                       | 统计每天的销售数据（用于需求预测）                 | 返回包含销售日期、药品ID和销售数量的Object数组列表，每个数组第一个元素为销售日期，第二个元素为药品ID，第三个元素为销售数量，若不存在则返回空列表     | 返回空列表           |
-| `@Query("SELECT sr.medicine.id, SUM(sr.quantity) as totalQuantity FROM SaleRecord sr WHERE sr.saleTime BETWEEN :startDate AND :endDate GROUP BY sr.medicine.id ORDER BY totalQuantity DESC")`<br>`List<Object[]> findTopSellingMedicines(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable)`                     | `List<Object[]>`       | `startDate`: 开始日期, `endDate`: 结束日期, `pageable`: 分页参数 | 查找最畅销的药品（按销售数量降序）                 | 返回包含药品ID和销售数量的Object数组列表，按销售数量降序排列，每个数组第一个元素为药品ID，第二个元素为销售数量，若不存在则返回空列表                 | 返回空列表           |
-| `@Query("SELECT sr FROM SaleRecord sr JOIN sr.symptom s WHERE s.id = :symptomId")`<br>`List<SaleRecord> findBySymptomId(@Param("symptomId") Integer symptomId)`                                                                                                                                                                                                        | `List<SaleRecord>`     | `symptomId`: 症状ID                                              | 根据症状ID查找销售记录                             | 返回与指定症状ID关联的销售记录列表，若不存在则返回空列表                                                                                             | 返回空列表           |
-| `@Query("SELECT sr FROM SaleRecord sr JOIN sr.symptom s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :symptomName, '%'))")`<br>`List<SaleRecord> findBySymptomName(@Param("symptomName") String symptomName)`                                                                                                                                                            | `List<SaleRecord>`     | `symptomName`: 症状名称                                          | 根据症状名称模糊查找销售记录                       | 返回与症状名称包含指定字符串的症状关联的销售记录列表，若不存在则返回空列表                                                                           | 返回空列表           |
-| `@Query("SELECT s.name, SUM(sr.quantity) as totalQuantity, SUM(sr.totalAmount) as totalAmount FROM SaleRecord sr JOIN sr.symptom s WHERE sr.saleTime BETWEEN :startDate AND :endDate GROUP BY s.id, s.name ORDER BY totalQuantity DESC")`<br>`List<Object[]> findSalesBySymptom(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate)` | `List<Object[]>`       | `startDate`: 开始日期, `endDate`: 结束日期                       | 统计按症状分类的销售数据                           | 返回包含症状名称、销售数量和销售总额的Object数组列表，每个数组第一个元素为症状名称，第二个元素为销售数量，第三个元素为销售总额，若不存在则返回空列表 | 返回空列表           |
+| 方法签名 | 返回类型 | 参数 | 描述 | 返回值说明 | 失败情况返回值 |
+|---------|---------|------|------|-----------|--------------|
+| `Optional<SaleRecord> findByRecordNo(String recordNo)` | `Optional<SaleRecord>` | `recordNo`: 销售单号 | 根据销售单号精确查找 | 返回包含指定销售单号销售记录的Optional对象，若不存在则返回Optional.empty() | 返回Optional.empty() |
+| `@Query("SELECT sr FROM SaleRecord sr WHERE sr.medicine.id = :medicineId")`<br>`List<SaleRecord> findByMedicineId(@Param("medicineId") Long medicineId)` | `List<SaleRecord>` | `medicineId`: 药品ID | 根据药品ID查找销售记录 | 返回指定药品ID的销售记录列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr FROM SaleRecord sr WHERE sr.operator.id = :operatorId")`<br>`List<SaleRecord> findByOperatorId(@Param("operatorId") Long operatorId)` | `List<SaleRecord>` | `operatorId`: 操作员ID | 根据操作员ID查找销售记录 | 返回指定操作员ID的销售记录列表，若不存在则返回空列表 | 返回空列表 |
+| `List<SaleRecord> findBySaleTimeBetween(LocalDateTime startTime, LocalDateTime endTime)` | `List<SaleRecord>` | `startTime`: 开始时间, `endTime`: 结束时间 | 根据时间段查找销售记录 | 返回指定时间范围内的销售记录列表，若不存在则返回空列表 | 返回空列表 |
+| `Page<SaleRecord> findAll(Pageable pageable)` | `Page<SaleRecord>` | `pageable`: 分页参数 | 分页查询所有销售记录 | 返回包含销售记录数据的Page对象，若不存在则返回空Page | 返回空Page对象 |
+| `Page<SaleRecord> findBySaleTimeBetween(LocalDateTime startTime, LocalDateTime endTime, Pageable pageable)` | `Page<SaleRecord>` | `startTime`: 开始时间, `endTime`: 结束时间, `pageable`: 分页参数 | 根据时间段分页查询 | 返回包含指定时间范围内销售记录数据的Page对象，若不存在则返回空Page | 返回空Page对象 |
+| `@Query("SELECT COALESCE(SUM(sr.quantity), 0) FROM SaleRecord sr WHERE sr.medicine.id = :medicineId")`<br>`Long sumQuantityByMedicineId(@Param("medicineId") Long medicineId)` | `Long` | `medicineId`: 药品ID | 统计某个药品的销售总量（使用COALESCE处理null值） | 返回指定药品ID的销售总量，若不存在则返回0 | 返回0 |
+| `@Query("SELECT COALESCE(SUM(sr.totalAmount), CAST(0 AS BigDecimal)) FROM SaleRecord sr WHERE sr.saleTime BETWEEN :startTime AND :endTime")`<br>`BigDecimal sumTotalAmountByPeriod(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime)` | `BigDecimal` | `startTime`: 开始时间, `endTime`: 结束时间 | 统计某个时间段的销售总额（使用COALESCE处理null值） | 返回指定时间段内的销售总额，若不存在则返回0 | 返回0 |
+| `@Query(value = "SELECT CAST(sr.sale_time AS DATE), sr.medicine_id, SUM(sr.quantity) FROM sale_record sr WHERE sr.sale_time BETWEEN :startDate AND :endDate GROUP BY CAST(sr.sale_time AS DATE), sr.medicine_id ORDER BY CAST(sr.sale_time AS DATE)", nativeQuery = true)`<br>`List<Object[]> findDailySales(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate)` | `List<Object[]>` | `startDate`: 开始日期, `endDate`: 结束日期 | 统计每天的销售数据（用于需求预测） | 返回包含销售日期、药品ID和销售数量的Object数组列表，每个数组第一个元素为销售日期，第二个元素为药品ID，第三个元素为销售数量，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr.medicine.id, SUM(sr.quantity) as totalQuantity FROM SaleRecord sr WHERE sr.saleTime BETWEEN :startDate AND :endDate GROUP BY sr.medicine.id ORDER BY totalQuantity DESC")`<br>`List<Object[]> findTopSellingMedicines(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable)` | `List<Object[]>` | `startDate`: 开始日期, `endDate`: 结束日期, `pageable`: 分页参数 | 查找最畅销的药品（按销售数量降序） | 返回包含药品ID和销售数量的Object数组列表，按销售数量降序排列，每个数组第一个元素为药品ID，第二个元素为销售数量，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr FROM SaleRecord sr JOIN sr.symptom s WHERE s.id = :symptomId")`<br>`List<SaleRecord> findBySymptomId(@Param("symptomId") Integer symptomId)` | `List<SaleRecord>` | `symptomId`: 症状ID | 根据症状ID查找销售记录 | 返回与指定症状ID关联的销售记录列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr FROM SaleRecord sr JOIN sr.symptom s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :symptomName, '%'))")`<br>`List<SaleRecord> findBySymptomName(@Param("symptomName") String symptomName)` | `List<SaleRecord>` | `symptomName`: 症状名称 | 根据症状名称模糊查找销售记录 | 返回与症状名称包含指定字符串的症状关联的销售记录列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT s.name, SUM(sr.quantity) as totalQuantity, SUM(sr.totalAmount) as totalAmount FROM SaleRecord sr JOIN sr.symptom s WHERE sr.saleTime BETWEEN :startDate AND :endDate GROUP BY s.id, s.name ORDER BY totalQuantity DESC")`<br>`List<Object[]> findSalesBySymptom(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate)` | `List<Object[]>` | `startDate`: 开始日期, `endDate`: 结束日期 | 统计按症状分类的销售数据 | 返回包含症状名称、销售数量和销售总额的Object数组列表，每个数组第一个元素为症状名称，第二个元素为销售数量，第三个元素为销售总额，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr.medicine FROM SaleRecord sr WHERE sr.id = :saleRecordId")`<br>`Medicine findMedicineBySaleRecordId(@Param("saleRecordId") Long saleRecordId)` | `Medicine` | `saleRecordId`: 销售记录ID | 根据销售记录ID查询关联的药品详情 | 返回指定销售记录关联的药品对象，若不存在则返回null | 返回null |
+| `@Query("SELECT sr.operator FROM SaleRecord sr WHERE sr.id = :saleRecordId")`<br>`User findOperatorBySaleRecordId(@Param("saleRecordId") Long saleRecordId)` | `User` | `saleRecordId`: 销售记录ID | 根据销售记录ID查询关联的操作员详情 | 返回指定销售记录关联的操作员对象，若不存在则返回null | 返回null |
+| `@Query("SELECT sr.symptom FROM SaleRecord sr WHERE sr.id = :saleRecordId")`<br>`List<Symptom> findSymptomsBySaleRecordId(@Param("saleRecordId") Long saleRecordId)` | `List<Symptom>` | `saleRecordId`: 销售记录ID | 根据销售记录ID查询关联的症状列表 | 返回指定销售记录关联的症状列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr FROM SaleRecord sr WHERE sr.operator.id = :operatorId ORDER BY sr.saleTime DESC")`<br>`Page<SaleRecord> findByOperatorIdWithPagination(@Param("operatorId") Long operatorId, Pageable pageable)` | `Page<SaleRecord>` | `operatorId`: 操作员ID, `pageable`: 分页参数 | 根据操作员ID查询销售记录（带分页） | 返回指定操作员ID的销售记录分页对象，按时间降序排列，若不存在则返回空Page | 返回空Page对象 |
+| `@Query("SELECT sr FROM SaleRecord sr WHERE sr.customerType = :customerType ORDER BY sr.saleTime DESC")`<br>`List<SaleRecord> findByCustomerType(@Param("customerType") Integer customerType)` | `List<SaleRecord>` | `customerType`: 顾客类型 | 根据顾客类型查询销售记录 | 返回指定顾客类型的销售记录列表，按时间降序排列，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr.operator.id, sr.operator.realName, COUNT(sr) as recordCount, SUM(sr.totalAmount) as totalAmount FROM SaleRecord sr WHERE sr.saleTime BETWEEN :startDate AND :endDate GROUP BY sr.operator.id, sr.operator.realName ORDER BY totalAmount DESC")`<br>`List<Object[]> findOperatorSalesPerformance(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate)` | `List<Object[]>` | `startDate`: 开始日期, `endDate`: 结束日期 | 统计操作员的销售业绩 | 返回包含操作员ID、真实姓名、记录数量、销售总额的Object数组列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query(value = "SELECT CAST(sr.sale_time AS DATE), SUM(sr.total_amount) as dailyAmount FROM sale_record sr WHERE sr.sale_time BETWEEN :startDate AND :endDate GROUP BY CAST(sr.sale_time AS DATE) ORDER BY CAST(sr.sale_time AS DATE)", nativeQuery = true)`<br>`List<Object[]> findDailySalesAmount(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate)` | `List<Object[]>` | `startDate`: 开始日期, `endDate`: 结束日期 | 统计每天的销售总额 | 返回包含日期和日销售总额的Object数组列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT m.id, m.name, SUM(sr.totalAmount) as totalSales FROM SaleRecord sr JOIN sr.medicine m WHERE sr.saleTime BETWEEN :startDate AND :endDate GROUP BY m.id, m.name ORDER BY totalSales DESC")`<br>`List<Object[]> findTopSellingMedicinesByAmount(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable)` | `List<Object[]>` | `startDate`: 开始日期, `endDate`: 结束日期, `pageable`: 分页参数 | 查询销售额最高的前N个药品 | 返回包含药品ID、名称、销售总额的Object数组列表，按销售额降序排列，若不存在则返回空列表 | 返回空列表 |
 
 **继承的JpaRepository方法**：
 - 基础的CRUD操作方法
@@ -615,23 +658,25 @@
 
 **方法列表**：
 
-| 方法签名                                                                                                                                                                                                                                                        | 返回类型         | 参数                                                | 描述                                                     | 返回值说明                                                                                                                                       | 失败情况返回值 |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | --------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
-| `@Query("SELECT s FROM Stock s WHERE s.medicine.id = :medicineId")`<br>`List<Stock> findByMedicineId(@Param("medicineId") Long medicineId)`                                                                                                                     | `List<Stock>`    | `medicineId`: 药品ID                                | 根据药品ID查找库存                                       | 返回指定药品ID的库存列表，若不存在则返回空列表                                                                                                   | 返回空列表     |
-| `@Query("SELECT s FROM Stock s WHERE s.medicine.id = :medicineId AND s.status = :status")`<br>`List<Stock> findByMedicineIdAndStatus(@Param("medicineId") Long medicineId, @Param("status") Integer status)`                                                    | `List<Stock>`    | `medicineId`: 药品ID, `status`: 状态(0-过期,1-正常) | 根据药品ID和状态查找库存                                 | 返回指定药品ID和状态的库存列表，若不存在则返回空列表                                                                                             | 返回空列表     |
-| `List<Stock> findByExpirationDateBeforeAndStatus(LocalDate date, Integer status)`                                                                                                                                                                               | `List<Stock>`    | `date`: 截止日期, `status`: 状态                    | 查找过期库存（在指定日期前过期且状态匹配）               | 返回在指定日期前过期且状态匹配的库存列表，若不存在则返回空列表                                                                                   | 返回空列表     |
-| `@Query("SELECT s FROM Stock s WHERE s.expirationDate BETWEEN :startDate AND :endDate AND s.status = 1")`<br>`List<Stock> findExpiringStock(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate)`                                      | `List<Stock>`    | `startDate`: 开始日期, `endDate`: 结束日期          | 查找即将过期的库存                                       | 返回在指定日期范围内过期且状态正常的库存列表，若不存在则返回空列表                                                                               | 返回空列表     |
-| `@Query("SELECT s FROM Stock s WHERE s.quantity <= s.warningQuantity AND s.status = 1")`<br>`List<Stock> findLowStock()`                                                                                                                                        | `List<Stock>`    | 无                                                  | 查找库存不足的药品（数量≤预警数量且状态正常）            | 返回数量≤预警数量且状态正常的库存列表，若不存在则返回空列表                                                                                      | 返回空列表     |
-| `List<Stock> findByBatchNumber(String batchNumber)`                                                                                                                                                                                                             | `List<Stock>`    | `batchNumber`: 批号                                 | 根据批号查找库存                                         | 返回指定批号的库存列表，若不存在则返回空列表                                                                                                     | 返回空列表     |
-| `@Query("SELECT COALESCE(SUM(s.quantity), 0) FROM Stock s WHERE s.medicine.id = :medicineId AND s.status = 1")`<br>`Integer sumQuantityByMedicineId(@Param("medicineId") Long medicineId)`                                                                      | `Integer`        | `medicineId`: 药品ID                                | 计算某个药品的正常状态总库存量（使用COALESCE处理null值） | 返回指定药品ID的正常状态总库存量，若不存在则返回0                                                                                                | 返回0          |
-| `@Query("SELECT s.medicine.id, SUM(s.quantity) as totalQuantity, MIN(s.warningQuantity) as warningQuantity FROM Stock s WHERE s.status = 1 GROUP BY s.medicine.id HAVING SUM(s.quantity) <= MIN(s.warningQuantity)")`<br>`List<Object[]> findLowStockSummary()` | `List<Object[]>` | 无                                                  | 查找所有库存不足的药品汇总信息                           | 返回包含药品ID、总库存量和预警数量的Object数组列表，每个数组第一个元素为药品ID，第二个元素为总库存量，第三个元素为预警数量，若不存在则返回空列表 | 返回空列表     |
-| `List<Stock> findByShelfLocation(String shelfLocation)`                                                                                                                                                                                                         | `List<Stock>`    | `shelfLocation`: 货架位置                           | 根据货架位置查找库存                                     | 返回指定货架位置的库存列表，若不存在则返回空列表                                                                                                 | 返回空列表     |
-| `List<Stock> findByStatus(Integer status)`                                                                                                                                                                                                                      | `List<Stock>`    | `status`: 货品状态状态(0-过期,1-正常)               | 根据货品状态查找库存                                     | 返回指定状态的库存列表，若不存在则返回空列表                                                                                                     | 返回空列表     |
-
-
-
-
-
+| 方法签名 | 返回类型 | 参数 | 描述 | 返回值说明 | 失败情况返回值 |
+|---------|---------|------|------|-----------|--------------|
+| `@Query("SELECT s FROM Stock s WHERE s.medicine.id = :medicineId")`<br>`List<Stock> findByMedicineId(@Param("medicineId") Long medicineId)` | `List<Stock>` | `medicineId`: 药品ID | 根据药品ID查找库存 | 返回指定药品ID的库存列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT s FROM Stock s WHERE s.medicine.id = :medicineId AND s.status = :status")`<br>`List<Stock> findByMedicineIdAndStatus(@Param("medicineId") Long medicineId, @Param("status") Integer status)` | `List<Stock>` | `medicineId`: 药品ID, `status`: 状态(0-过期,1-正常) | 根据药品ID和状态查找库存 | 返回指定药品ID和状态的库存列表，若不存在则返回空列表 | 返回空列表 |
+| `List<Stock> findByExpirationDateBeforeAndStatus(LocalDate date, Integer status)` | `List<Stock>` | `date`: 截止日期, `status`: 状态 | 查找过期库存（在指定日期前过期且状态匹配） | 返回在指定日期前过期且状态匹配的库存列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT s FROM Stock s WHERE s.expirationDate BETWEEN :startDate AND :endDate AND s.status = 1")`<br>`List<Stock> findExpiringStock(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate)` | `List<Stock>` | `startDate`: 开始日期, `endDate`: 结束日期 | 查找即将过期的库存 | 返回在指定日期范围内过期且状态正常的库存列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT s FROM Stock s WHERE s.quantity <= s.warningQuantity AND s.status = 1")`<br>`List<Stock> findLowStock()` | `List<Stock>` | 无 | 查找库存不足的药品（数量≤预警数量且状态正常） | 返回数量≤预警数量且状态正常的库存列表，若不存在则返回空列表 | 返回空列表 |
+| `List<Stock> findByBatchNumber(String batchNumber)` | `List<Stock>` | `batchNumber`: 批号 | 根据批号查找库存 | 返回指定批号的库存列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT COALESCE(SUM(s.quantity), 0) FROM Stock s WHERE s.medicine.id = :medicineId AND s.status = 1")`<br>`Long sumQuantityByMedicineId(@Param("medicineId") Long medicineId)` | `Long` | `medicineId`: 药品ID | 计算某个药品的正常状态总库存量（使用COALESCE处理null值） | 返回指定药品ID的正常状态总库存量，若不存在则返回0 | 返回0 |
+| `@Query("SELECT s.medicine.id, SUM(s.quantity) as totalQuantity, MIN(s.warningQuantity) as warningQuantity FROM Stock s WHERE s.status = 1 GROUP BY s.medicine.id HAVING SUM(s.quantity) <= MIN(s.warningQuantity)")`<br>`List<Object[]> findLowStockSummary()` | `List<Object[]>` | 无 | 查找所有库存不足的药品汇总信息 | 返回包含药品ID、总库存量和预警数量的Object数组列表，每个数组第一个元素为药品ID，第二个元素为总库存量，第三个元素为预警数量，若不存在则返回空列表 | 返回空列表 |
+| `List<Stock> findByShelfLocation(String shelfLocation)` | `List<Stock>` | `shelfLocation`: 货架位置 | 根据货架位置查找库存 | 返回指定货架位置的库存列表，若不存在则返回空列表 | 返回空列表 |
+| `List<Stock> findByStatus(Integer status)` | `List<Stock>` | `status`: 货品状态状态(0-过期,1-正常) | 根据货品状态查找库存 | 返回指定状态的库存列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT s.medicine FROM Stock s WHERE s.id = :stockId")`<br>`Medicine findMedicineByStockId(@Param("stockId") Long stockId)` | `Medicine` | `stockId`: 库存ID | 根据库存ID查询关联的药品详情 | 返回指定库存记录关联的药品对象，若不存在则返回null | 返回null |
+| `@Query("SELECT s.status, SUM(s.quantity) as totalQuantity FROM Stock s WHERE s.medicine.id = :medicineId GROUP BY s.status")`<br>`List<Object[]> findStatusStatisticsByMedicineId(@Param("medicineId") Long medicineId)` | `List<Object[]>` | `medicineId`: 药品ID | 根据药品ID查询库存状态统计 | 返回包含状态和各状态数量的Object数组列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT s FROM Stock s WHERE s.shelfLocation LIKE LOWER(CONCAT('%', :location, '%')) AND s.status = 1")`<br>`List<Stock> findByShelfLocationContaining(@Param("location") String location)` | `List<Stock>` | `location`: 货架位置 | 根据货架位置模糊查询库存 | 返回货架位置包含指定字符串且状态正常的库存列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT s FROM Stock s WHERE s.status = 0 ORDER BY s.expirationDate ASC")`<br>`List<Stock> findExpiredStock()` | `List<Stock>` | 无 | 查询过期库存（状态为0） | 返回状态为过期的库存列表，按有效期升序排列，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT COALESCE(SUM(s.quantity * m.retailPrice), CAST(0 AS BigDecimal)) FROM Stock s JOIN s.medicine m WHERE s.status = 1")`<br>`BigDecimal calculateTotalStockValue()` | `BigDecimal` | 无 | 统计库存总价值 | 返回所有正常状态库存的总价值（数量×零售价），若不存在则返回0 | 返回0 |
+| `@Query("SELECT c.name, COALESCE(SUM(s.quantity * m.retailPrice), CAST(0 AS BigDecimal)) as totalValue FROM Stock s JOIN s.medicine m JOIN m.category c WHERE s.status = 1 GROUP BY c.id, c.name ORDER BY totalValue DESC")`<br>`List<Object[]> calculateStockValueByCategory()` | `List<Object[]>` | 无 | 统计每个分类的库存价值 | 返回包含分类名称和库存价值的Object数组列表，按价值降序排列，若不存在则返回空列表 | 返回空列表 |
+| `@Query(value = "SELECT m.id, m.name, COALESCE(stock.currentQty, 0) AS currentStock, COALESCE(sold.soldQty, 0) AS soldQuantity, CASE WHEN COALESCE(stock.currentQty, 0) > 0 THEN COALESCE(sold.soldQty, 0) / stock.currentQty ELSE 0 END AS turnoverRate FROM medicine m LEFT JOIN (SELECT s.medicine_id AS medId, SUM(s.quantity) AS currentQty FROM stock s WHERE s.status = 1 GROUP BY s.medicine_id) stock ON m.id = stock.medId LEFT JOIN (SELECT sr.medicine_id AS medId, SUM(sr.quantity) AS soldQty FROM sale_record sr WHERE sr.sale_time BETWEEN :startDate AND :endDate GROUP BY sr.medicine_id) sold ON m.id = sold.medId ORDER BY turnoverRate DESC", nativeQuery = true)`<br>`List<Object[]> calculateStockTurnoverRate(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate)` | `List<Object[]>` | `startDate`: 开始日期, `endDate`: 结束日期 | 查询库存周转率（基于销售记录） | 返回包含药品ID、名称、当前库存、销售数量、周转率的Object数组列表，按周转率降序排列，若不存在则返回空列表 | 返回空列表 |
 
 **继承的JpaRepository方法**：
 - 基础的CRUD操作方法
@@ -651,13 +696,21 @@
 
 **方法列表**：
 
-| 方法签名                                                                                                                                                                                                                          | 返回类型            | 参数                            | 描述                           | 返回值说明                                                         | 失败情况返回值       |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ------------------------------- | ------------------------------ | ------------------------------------------------------------------ | -------------------- |
-| `Optional<Symptom> findByName(String name)`                                                                                                                                                                                       | `Optional<Symptom>` | `name`: 症状名称                | 根据名称精确查找症状           | 返回包含指定名称症状的Optional对象，若不存在则返回Optional.empty() | 返回Optional.empty() |
-| `List<Symptom> findByNameContaining(String name)`                                                                                                                                                                                 | `List<Symptom>`     | `name`: 症状名称（模糊匹配）    | 根据名称模糊查询               | 返回名称包含指定字符串的症状列表，若不存在则返回空列表             | 返回空列表           |
-| `boolean existsByName(String name)`                                                                                                                                                                                               | `boolean`           | `name`: 症状名称                | 检查症状名称是否存在           | 返回指定症状名称是否存在的布尔值                                   | 返回false            |
-| `List<Symptom> findByDescriptionContaining(String description)`                                                                                                                                                                   | `List<Symptom>`     | `description`: 描述（模糊匹配） | 根据描述模糊查询               | 返回描述包含指定字符串的症状列表，若不存在则返回空列表             | 返回空列表           |
-| `@Query("SELECT s FROM Symptom s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(s.description) LIKE LOWER(CONCAT('%', :keyword, '%'))")`<br>`List<Symptom> searchSymptoms(@Param("keyword") String keyword)` | `List<Symptom>`     | `keyword`: 关键词               | 搜索症状（名称或描述模糊匹配） | 返回名称或描述包含指定关键词的症状列表，若不存在则返回空列表       | 返回空列表           |
+| 方法签名 | 返回类型 | 参数 | 描述 | 返回值说明 | 失败情况返回值 |
+|---------|---------|------|------|-----------|--------------|
+| `Optional<Symptom> findByName(String name)` | `Optional<Symptom>` | `name`: 症状名称 | 根据名称精确查找症状 | 返回包含指定名称症状的Optional对象，若不存在则返回Optional.empty() | 返回Optional.empty() |
+| `List<Symptom> findByNameContaining(String name)` | `List<Symptom>` | `name`: 症状名称（模糊匹配） | 根据名称模糊查询 | 返回名称包含指定字符串的症状列表，若不存在则返回空列表 | 返回空列表 |
+| `boolean existsByName(String name)` | `boolean` | `name`: 症状名称 | 检查症状名称是否存在 | 返回指定症状名称是否存在的布尔值 | 返回false |
+| `List<Symptom> findByDescriptionContaining(String description)` | `List<Symptom>` | `description`: 描述（模糊匹配） | 根据描述模糊查询 | 返回描述包含指定字符串的症状列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT s FROM Symptom s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(s.description) LIKE LOWER(CONCAT('%', :keyword, '%'))")`<br>`List<Symptom> searchSymptoms(@Param("keyword") String keyword)` | `List<Symptom>` | `keyword`: 关键词 | 搜索症状（名称或描述模糊匹配） | 返回名称或描述包含指定关键词的症状列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT m FROM Medicine m JOIN m.symptoms s WHERE s.id = :symptomId")`<br>`List<Medicine> findMedicinesBySymptomId(@Param("symptomId") Integer symptomId)` | `List<Medicine>` | `symptomId`: 症状ID | 根据症状ID查询关联的药品 | 返回与指定症状关联的所有药品列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT m FROM Medicine m JOIN m.symptoms s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :symptomName, '%'))")`<br>`List<Medicine> findMedicinesBySymptomName(@Param("symptomName") String symptomName)` | `List<Medicine>` | `symptomName`: 症状名称 | 根据症状名称查询关联的药品 | 返回与症状名称包含指定字符串的症状关联的药品列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr FROM SaleRecord sr JOIN sr.symptom s WHERE s.id = :symptomId")`<br>`List<SaleRecord> findSaleRecordsBySymptomId(@Param("symptomId") Integer symptomId)` | `List<SaleRecord>` | `symptomId`: 症状ID | 根据症状ID查询关联的销售记录 | 返回与指定症状关联的所有销售记录列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr FROM SaleRecord sr JOIN sr.symptom s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :symptomName, '%'))")`<br>`List<SaleRecord> findSaleRecordsBySymptomName(@Param("symptomName") String symptomName)` | `List<SaleRecord>` | `symptomName`: 症状名称 | 根据症状名称查询关联的销售记录 | 返回与症状名称包含指定字符串的症状关联的销售记录列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT COUNT(DISTINCT m) FROM Medicine m JOIN m.symptoms s WHERE s.id = :symptomId")`<br>`long countMedicinesBySymptomId(@Param("symptomId") Integer symptomId)` | `long` | `symptomId`: 症状ID | 统计症状关联的药品数量 | 返回与指定症状关联的药品数量，若不存在则返回0 | 返回0 |
+| `@Query("SELECT COUNT(sr) FROM SaleRecord sr JOIN sr.symptom s WHERE s.id = :symptomId")`<br>`long countSaleRecordsBySymptomId(@Param("symptomId") Integer symptomId)` | `long` | `symptomId`: 症状ID | 统计症状关联的销售记录数量 | 返回与指定症状关联的销售记录数量，若不存在则返回0 | 返回0 |
+| `@Query("SELECT COALESCE(SUM(sr.totalAmount), CAST(0 AS BigDecimal)) FROM SaleRecord sr JOIN sr.symptom s WHERE s.id = :symptomId")`<br>`BigDecimal sumSaleAmountBySymptomId(@Param("symptomId") Integer symptomId)` | `BigDecimal` | `symptomId`: 症状ID | 统计症状关联的销售总额 | 返回与指定症状关联的销售总额，若不存在则返回0 | 返回0 |
+| `@Query("SELECT s.id, COUNT(DISTINCT sr.id) as usageCount FROM SaleRecord sr JOIN sr.symptom s WHERE sr.saleTime BETWEEN :start AND :end GROUP BY s.id ORDER BY usageCount DESC")`<br>`List<Object[]> findMostCommonSymptoms(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end, Pageable pageable)` | `List<Object[]>` | `start`: 开始时间, `end`: 结束时间, `pageable`: 分页参数 | 查找指定时间范围内最常见的症状 | 返回包含症状ID和使用次数的Object数组列表，按使用次数降序排列，若不存在则返回空列表 | 返回空列表 |
 
 **继承的JpaRepository方法**：
 - 基础的CRUD操作方法
@@ -677,14 +730,14 @@
 
 **方法列表**：
 
-| 方法签名                                                                                                                                                                                                                  | 返回类型         | 参数                                     | 描述                                   | 返回值说明                                                                 | 失败情况返回值       |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ---------------------------------------- | -------------------------------------- | -------------------------------------------------------------------------- | -------------------- |
-| `Optional<User> findByUsername(String username)`                                                                                                                                                                          | `Optional<User>` | `username`: 用户名                       | 根据用户名精确查找用户                 | 返回包含指定用户名用户的Optional对象，若不存在则返回Optional.empty()       | 返回Optional.empty() |
-| `boolean existsByUsername(String username)`                                                                                                                                                                               | `boolean`        | `username`: 用户名                       | 检查用户名是否存在                     | 返回指定用户名是否存在的布尔值                                             | 返回false            |
-| `List<User> findByRole(String role)`                                                                                                                                                                                      | `List<User>`     | `role`: 角色(ADMIN,PHARMACIST,PURCHASER) | 根据角色查找用户                       | 返回指定角色的用户列表，若不存在则返回空列表                               | 返回空列表           |
-| `List<User> findByStatus(Integer status)`                                                                                                                                                                                 | `List<User>`     | `status`: 状态(0-禁用,1-正常)            | 根据状态查找用户                       | 返回指定状态的用户列表，若不存在则返回空列表                               | 返回空列表           |
-| `Optional<User> findByUsernameAndStatus(String username, Integer status)`                                                                                                                                                 | `Optional<User>` | `username`: 用户名, `status`: 状态       | 根据用户名和状态查找                   | 返回包含指定用户名和状态用户的Optional对象，若不存在则返回Optional.empty() | 返回Optional.empty() |
-| `@Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.realName) LIKE LOWER(CONCAT('%', :keyword, '%'))")`<br>`List<User> searchUsers(@Param("keyword") String keyword)` | `List<User>`     | `keyword`: 关键词                        | 搜索用户（按用户名或真实姓名模糊匹配） | 返回用户名或真实姓名包含指定关键词的用户列表，若不存在则返回空列表         | 返回空列表           |
+| 方法签名 | 返回类型 | 参数 | 描述 | 返回值说明 | 失败情况返回值 |
+|---------|---------|------|------|-----------|--------------|
+| `Optional<User> findByUsername(String username)` | `Optional<User>` | `username`: 用户名 | 根据用户名精确查找用户 | 返回包含指定用户名用户的Optional对象，若不存在则返回Optional.empty() | 返回Optional.empty() |
+| `boolean existsByUsername(String username)` | `boolean` | `username`: 用户名 | 检查用户名是否存在 | 返回指定用户名是否存在的布尔值 | 返回false |
+| `List<User> findByRole(String role)` | `List<User>` | `role`: 角色(ADMIN,PHARMACIST,PURCHASER) | 根据角色查找用户 | 返回指定角色的用户列表，若不存在则返回空列表 | 返回空列表 |
+| `List<User> findByStatus(Integer status)` | `List<User>` | `status`: 状态(0-禁用,1-正常) | 根据状态查找用户 | 返回指定状态的用户列表，若不存在则返回空列表 | 返回空列表 |
+| `Optional<User> findByUsernameAndStatus(String username, Integer status)` | `Optional<User>` | `username`: 用户名, `status`: 状态 | 根据用户名和状态查找 | 返回包含指定用户名和状态用户的Optional对象，若不存在则返回Optional.empty() | 返回Optional.empty() |
+| `@Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.realName) LIKE LOWER(CONCAT('%', :keyword, '%'))")`<br>`List<User> searchUsers(@Param("keyword") String keyword)` | `List<User>` | `keyword`: 关键词 | 搜索用户（按用户名或真实姓名模糊匹配） | 返回用户名或真实姓名包含指定关键词的用户列表，若不存在则返回空列表 | 返回空列表 |
 
 **继承的JpaRepository方法**：
 - 基础的CRUD操作方法
@@ -724,6 +777,45 @@
 
 ---
 
+**主要修正说明**：
+1. **修正**`CategoryRepository.findDescendantsByParentId`**的描述**：将原文档中"查找某个分类的所有子孙分类（包含子分类和孙分类）"修正为"查找某个分类的直接子分类"，以准确反映代码逻辑（仅查询一级子分类）
+2. **保留所有扩展方法**：包括各Repository中新增的关联查询、统计分析等方法（如库存周转率、供应商统计、操作员业绩等）
+3. **统一返回类型**：确保`Long`、`BigDecimal`等包装类型与代码完全一致
+
+
+
+**方法列表**：
+
+| 方法签名 | 返回类型 | 参数 | 描述 | 返回值说明 | 失败情况返回值 |
+|---------|---------|------|------|-----------|--------------|
+| `Optional<SaleRecord> findByRecordNo(String recordNo)` | `Optional<SaleRecord>` | `recordNo`: 销售单号 | 根据销售单号精确查找 | 返回包含指定销售单号销售记录的Optional对象，若不存在则返回Optional.empty() | 返回Optional.empty() |
+| `@Query("SELECT sr FROM SaleRecord sr WHERE sr.medicine.id = :medicineId")`<br>`List<SaleRecord> findByMedicineId(@Param("medicineId") Long medicineId)` | `List<SaleRecord>` | `medicineId`: 药品ID | 根据药品ID查找销售记录 | 返回指定药品ID的销售记录列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr FROM SaleRecord sr WHERE sr.operator.id = :operatorId")`<br>`List<SaleRecord> findByOperatorId(@Param("operatorId") Long operatorId)` | `List<SaleRecord>` | `operatorId`: 操作员ID | 根据操作员ID查找销售记录 | 返回指定操作员ID的销售记录列表，若不存在则返回空列表 | 返回空列表 |
+| `List<SaleRecord> findBySaleTimeBetween(LocalDateTime startTime, LocalDateTime endTime)` | `List<SaleRecord>` | `startTime`: 开始时间, `endTime`: 结束时间 | 根据时间段查找销售记录 | 返回指定时间范围内的销售记录列表，若不存在则返回空列表 | 返回空列表 |
+| `Page<SaleRecord> findAll(Pageable pageable)` | `Page<SaleRecord>` | `pageable`: 分页参数 | 分页查询所有销售记录 | 返回包含销售记录数据的Page对象，若不存在则返回空Page | 返回空Page对象 |
+| `Page<SaleRecord> findBySaleTimeBetween(LocalDateTime startTime, LocalDateTime endTime, Pageable pageable)` | `Page<SaleRecord>` | `startTime`: 开始时间, `endTime`: 结束时间, `pageable`: 分页参数 | 根据时间段分页查询 | 返回包含指定时间范围内销售记录数据的Page对象，若不存在则返回空Page | 返回空Page对象 |
+| `@Query("SELECT COALESCE(SUM(sr.quantity), 0) FROM SaleRecord sr WHERE sr.medicine.id = :medicineId")`<br>`Long sumQuantityByMedicineId(@Param("medicineId") Long medicineId)` | `Long` | `medicineId`: 药品ID | 统计某个药品的销售总量（使用COALESCE处理null值） | 返回指定药品ID的销售总量，若不存在则返回0 | 返回0 |
+| `@Query("SELECT COALESCE(SUM(sr.totalAmount), CAST(0 AS BigDecimal)) FROM SaleRecord sr WHERE sr.saleTime BETWEEN :startTime AND :endTime")`<br>`BigDecimal sumTotalAmountByPeriod(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime)` | `BigDecimal` | `startTime`: 开始时间, `endTime`: 结束时间 | 统计某个时间段的销售总额（使用COALESCE处理null值） | 返回指定时间段内的销售总额，若不存在则返回0 | 返回0 |
+| `@Query(value = "SELECT CAST(sr.sale_time AS DATE), sr.medicine_id, SUM(sr.quantity) FROM sale_record sr WHERE sr.sale_time BETWEEN :startDate AND :endDate GROUP BY CAST(sr.sale_time AS DATE), sr.medicine_id ORDER BY CAST(sr.sale_time AS DATE)", nativeQuery = true)`<br>`List<Object[]> findDailySales(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate)` | `List<Object[]>` | `startDate`: 开始日期, `endDate`: 结束日期 | 统计每天的销售数据（用于需求预测） | 返回包含销售日期、药品ID和销售数量的Object数组列表，每个数组第一个元素为销售日期，第二个元素为药品ID，第三个元素为销售数量，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr.medicine.id, SUM(sr.quantity) as totalQuantity FROM SaleRecord sr WHERE sr.saleTime BETWEEN :startDate AND :endDate GROUP BY sr.medicine.id ORDER BY totalQuantity DESC")`<br>`List<Object[]> findTopSellingMedicines(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable)` | `List<Object[]>` | `startDate`: 开始日期, `endDate`: 结束日期, `pageable`: 分页参数 | 查找最畅销的药品（按销售数量降序） | 返回包含药品ID和销售数量的Object数组列表，按销售数量降序排列，每个数组第一个元素为药品ID，第二个元素为销售数量，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr FROM SaleRecord sr JOIN sr.symptom s WHERE s.id = :symptomId")`<br>`List<SaleRecord> findBySymptomId(@Param("symptomId") Integer symptomId)` | `List<SaleRecord>` | `symptomId`: 症状ID | 根据症状ID查找销售记录 | 返回与指定症状ID关联的销售记录列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr FROM SaleRecord sr JOIN sr.symptom s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :symptomName, '%'))")`<br>`List<SaleRecord> findBySymptomName(@Param("symptomName") String symptomName)` | `List<SaleRecord>` | `symptomName`: 症状名称 | 根据症状名称模糊查找销售记录 | 返回与症状名称包含指定字符串的症状关联的销售记录列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT s.name, SUM(sr.quantity) as totalQuantity, SUM(sr.totalAmount) as totalAmount FROM SaleRecord sr JOIN sr.symptom s WHERE sr.saleTime BETWEEN :startDate AND :endDate GROUP BY s.id, s.name ORDER BY totalQuantity DESC")`<br>`List<Object[]> findSalesBySymptom(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate)` | `List<Object[]>` | `startDate`: 开始日期, `endDate`: 结束日期 | 统计按症状分类的销售数据 | 返回包含症状名称、销售数量和销售总额的Object数组列表，每个数组第一个元素为症状名称，第二个元素为销售数量，第三个元素为销售总额，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr.medicine FROM SaleRecord sr WHERE sr.id = :saleRecordId")`<br>`Medicine findMedicineBySaleRecordId(@Param("saleRecordId") Long saleRecordId)` | `Medicine` | `saleRecordId`: 销售记录ID | 根据销售记录ID查询关联的药品详情 | 返回指定销售记录关联的药品对象，若不存在则返回null | 返回null |
+| `@Query("SELECT sr.operator FROM SaleRecord sr WHERE sr.id = :saleRecordId")`<br>`User findOperatorBySaleRecordId(@Param("saleRecordId") Long saleRecordId)` | `User` | `saleRecordId`: 销售记录ID | 根据销售记录ID查询关联的操作员详情 | 返回指定销售记录关联的操作员对象，若不存在则返回null | 返回null |
+| `@Query("SELECT sr.symptom FROM SaleRecord sr WHERE sr.id = :saleRecordId")`<br>`List<Symptom> findSymptomsBySaleRecordId(@Param("saleRecordId") Long saleRecordId)` | `List<Symptom>` | `saleRecordId`: 销售记录ID | 根据销售记录ID查询关联的症状列表 | 返回指定销售记录关联的症状列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr FROM SaleRecord sr WHERE sr.operator.id = :operatorId ORDER BY sr.saleTime DESC")`<br>`Page<SaleRecord> findByOperatorIdWithPagination(@Param("operatorId") Long operatorId, Pageable pageable)` | `Page<SaleRecord>` | `operatorId`: 操作员ID, `pageable`: 分页参数 | 根据操作员ID查询销售记录（带分页） | 返回指定操作员ID的销售记录分页对象，按时间降序排列，若不存在则返回空Page | 返回空Page对象 |
+| `@Query("SELECT sr FROM SaleRecord sr WHERE sr.customerType = :customerType ORDER BY sr.saleTime DESC")`<br>`List<SaleRecord> findByCustomerType(@Param("customerType") Integer customerType)` | `List<SaleRecord>` | `customerType`: 顾客类型 | 根据顾客类型查询销售记录 | 返回指定顾客类型的销售记录列表，按时间降序排列，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT sr.operator.id, sr.operator.realName, COUNT(sr) as recordCount, SUM(sr.totalAmount) as totalAmount FROM SaleRecord sr WHERE sr.saleTime BETWEEN :startDate AND :endDate GROUP BY sr.operator.id, sr.operator.realName ORDER BY totalAmount DESC")`<br>`List<Object[]> findOperatorSalesPerformance(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate)` | `List<Object[]>` | `startDate`: 开始日期, `endDate`: 结束日期 | 统计操作员的销售业绩 | 返回包含操作员ID、真实姓名、记录数量、销售总额的Object数组列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query(value = "SELECT CAST(sr.sale_time AS DATE), SUM(sr.total_amount) as dailyAmount FROM sale_record sr WHERE sr.sale_time BETWEEN :startDate AND :endDate GROUP BY CAST(sr.sale_time AS DATE) ORDER BY CAST(sr.sale_time AS DATE)", nativeQuery = true)`<br>`List<Object[]> findDailySalesAmount(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate)` | `List<Object[]>` | `startDate`: 开始日期, `endDate`: 结束日期 | 统计每天的销售总额 | 返回包含日期和日销售总额的Object数组列表，若不存在则返回空列表 | 返回空列表 |
+| `@Query("SELECT m.id, m.name, SUM(sr.totalAmount) as totalSales FROM SaleRecord sr JOIN sr.medicine m WHERE sr.saleTime BETWEEN :startDate AND :endDate GROUP BY m.id, m.name ORDER BY totalSales DESC")`<br>`List<Object[]> findTopSellingMedicinesByAmount(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable)` | `List<Object[]>` | `startDate`: 开始日期, `endDate`: 结束日期, `pageable`: 分页参数 | 查询销售额最高的前N个药品 | 返回包含药品ID、名称、销售总额的Object数组列表，按销售额降序排列，若不存在则返回空列表 | 返回空列表 |
+
+**继承的JpaRepository方法**：
+- 基础的CRUD操作方法
+
+---
+
+
 ## 业务逻辑层 (Service Layer) 文档
 
 ### 1. 接口：BaseService（基础服务接口）
@@ -740,7 +832,7 @@
 **方法列表**：
 
 | 方法签名                             | 返回类型  | 参数                 | 描述                   | 返回值说明                                              | 失败情况返回值             |
-| ------------------------------------ | --------- | -------------------- | ---------------------- |
+| ------------------------------------ | --------- | -------------------- | ---------------------- | ------------------------------------------------------- | -------------------------- |
 | `T save(T entity)`                   | `T`       | `entity`: 实体对象   | 保存实体（新增或更新） | 返回保存后的实体对象                                    | 保存失败时抛出异常         |
 | `T update(T entity)`                 | `T`       | `entity`: 实体对象   | 更新实体               | 返回更新后的实体对象                                    | 更新失败时抛出异常         |
 | `void delete(ID id)`                 | `void`    | `id`: 实体ID         | 根据ID删除实体         | 无返回值                                                | 删除失败时抛出异常         |
@@ -814,6 +906,11 @@
 | `Page<Category> searchCategories(String keyword, Pageable pageable)` | `Page<Category>`    | `keyword`: 关键词, `pageable`: 分页参数 | 搜索分类（按名称或描述）             | 返回名称或描述包含关键词的启用状态分类的分页对象                                                     | 返回空Page对象                                  |
 | `boolean hasAssociatedMedicines(Long categoryId)`                    | `boolean`           | `categoryId`: 分类ID                    | 检查分类是否有关联的药品             | 返回分类是否有关联药品的布尔值，分类不存在则返回false                                                | 返回false                                       |
 | `void delete(Long id)`                                               | `void`              | `id`: 分类ID                            | 删除分类（检查关联药品）             | 无返回值，执行后会删除指定分类                                                                       | 分类下有关联药品时抛出IllegalStateException异常 |
+| `Page<Category> findActiveCategories(Pageable pageable)`             | `Page<Category>`    | `pageable`: 分页参数                    | 查找启用的分类（分页）               | 返回状态为启用的分类分页对象                                                                         | 返回空Page对象                                  |
+| `Page<Category> findSubcategoriesByParentId(Long parentId, Pageable pageable)` | `Page<Category>` | `parentId`: 父分类ID, `pageable`: 分页参数 | 根据父分类ID查找子分类（分页）    | 返回指定父分类下的子分类分页对象                                                                     | 返回空Page对象                                  |
+| `Map<Long, List<Category>> getCategoryHierarchy()`                   | `Map<Long, List<Category>>` | 无                            | 获取分类层级结构                     | 返回按父分类ID分组的分类映射                                                                         | 返回空Map                                       |
+| `Page<Category> findCategoriesWithMedicines(Pageable pageable)`      | `Page<Category>`    | `pageable`: 分页参数                    | 查找有关联药品的分类（分页）         | 返回包含至少一个药品的分类分页对象                                                                   | 返回空Page对象                                  |
+| `Map<String, Object> getCategoryStatistics(Long categoryId)`         | `Map<String, Object>` | `categoryId`: 分类ID                  | 获取分类统计信息                     | 返回分类的统计信息，包含药品数量、销售金额、子分类数量等                                             | 返回空Map                                       |
 
 **实现类**：`CategoryServiceImpl`
 
@@ -844,6 +941,11 @@
 | `searchCategories(String keyword, Pageable pageable)` | 搜索分类（名称或描述模糊匹配）                                | 内存分页处理                                              |
 | `hasAssociatedMedicines(Long categoryId)`             | 检查分类是否有关联的药品                                      | 检查分类的`medicines`列表                                 |
 | `delete(Long id)`                                     | 删除分类（检查关联药品）                                      | 如果有关联药品则抛出异常                                  |
+| `findActiveCategories(Pageable pageable)`             | 查询启用状态的分类                                            | 调用`repository.findByStatusOrderBySortAsc(1)`，内存分页  |
+| `findSubcategoriesByParentId(Long parentId, Pageable pageable)` | 查询指定父分类的子分类                              | 调用`repository.findByParentId()`，内存分页               |
+| `getCategoryHierarchy()`                              | 获取分类层级结构                                              | 使用Stream按parentId分组                                  |
+| `findCategoriesWithMedicines(Pageable pageable)`      | 查找有关联药品的分类                                          | 遍历所有分类，检查关联药品数量，内存分页                  |
+| `getCategoryStatistics(Long categoryId)`              | 获取分类统计信息                                              | 统计药品数量、销售金额、子分类数量等                      |
 
 ---
 
@@ -869,8 +971,21 @@
 | `List<Medicine> findByCategoryId(Long categoryId)`                                | `List<Medicine>` | `categoryId`: 分类ID                                         | 根据分类ID查找药品                 | 返回指定分类ID的所有药品列表                           | 返回空列表     |
 | `Medicine updatePrice(Long id, BigDecimal retailPrice, BigDecimal purchasePrice)` | `Medicine`       | `id`: 药品ID, `retailPrice`: 零售价, `purchasePrice`: 采购价 | 更新药品价格                       | 返回更新后的药品对象，药品不存在则返回null             | 返回null       |
 | `long countByStatus(Integer status)`                                              | `long`           | `status`: 状态                                               | 统计指定状态的药品数量             | 返回指定状态的药品数量，无匹配则返回0                  | 返回0          |
+| `Page<Medicine> findSeasonalMedicines(Pageable pageable)`                         | `Page<Medicine>` | `pageable`: 分页参数                                         | 查找季节性药品（分页）             | 返回季节性药品的分页对象                               | 返回空Page对象 |
+| `Page<Medicine> findPrescriptionMedicines(Pageable pageable)`                     | `Page<Medicine>` | `pageable`: 分页参数                                         | 查找处方药（分页）                 | 返回处方药的分页对象                                   | 返回空Page对象 |
+| `Page<Medicine> findByManufacturer(String manufacturer, Pageable pageable)`       | `Page<Medicine>` | `manufacturer`: 生产厂家, `pageable`: 分页参数               | 根据生产厂家查找药品（分页）       | 返回指定生产厂家的药品分页对象                         | 返回空Page对象 |
+| `Page<Medicine> findLowStockMedicines(Pageable pageable)`                         | `Page<Medicine>` | `pageable`: 分页参数                                         | 查找库存不足的药品（分页）         | 返回库存低于预警阈值的药品分页对象                     | 返回空Page对象 |
+| `Map<String, Object> getMedicineSalesStatistics(Long medicineId)`                 | `Map<String, Object>` | `medicineId`: 药品ID                                    | 获取药品销售统计信息               | 返回药品的销售总量、销售趋势等统计信息                 | 返回空Map      |
+| `Map<String, Object> getMedicinePurchaseStatistics(Long medicineId)`              | `Map<String, Object>` | `medicineId`: 药品ID                                    | 获取药品采购统计信息               | 返回药品的采购总量等统计信息                           | 返回空Map      |
+| `void batchUpdateStatus(List<Long> medicineIds, Integer status)`                  | `void`           | `medicineIds`: 药品ID列表, `status`: 状态                    | 批量更新药品状态                   | 无返回值                                               | 抛出异常       |
+| `Page<Medicine> findExpiringMedicines(int daysThreshold, Pageable pageable)`      | `Page<Medicine>` | `daysThreshold`: 天数阈值, `pageable`: 分页参数              | 查找即将过期的药品（分页）         | 返回指定天数内即将过期的药品分页对象                   | 返回空Page对象 |
+| `Page<Medicine> findByStorageRequirement(Integer storageRequirement, Pageable pageable)` | `Page<Medicine>` | `storageRequirement`: 存储要求, `pageable`: 分页参数 | 根据存储要求查找药品（分页）   | 返回指定存储要求的药品分页对象                         | 返回空Page对象 |
+| `Page<Medicine> searchMedicinesWithPagination(String keyword, Pageable pageable)` | `Page<Medicine>` | `keyword`: 关键词, `pageable`: 分页参数                      | 搜索药品（分页）                   | 返回关键词搜索结果的药品分页对象                       | 返回空Page对象 |
 
 **实现类**：`MedicineServiceImpl`
+
+**依赖注入**：
+- `StockRepository`：用于库存数据访问
 
 ---
 
@@ -884,6 +999,9 @@
 - `@Service`：Spring注解，标识为服务组件
 - `@Transactional`：类级别事务注解
 
+**依赖注入**：
+- `@Autowired private StockRepository stockRepository`
+
 **主要方法实现**：
 
 | 方法签名                                                                 | 实现描述                                        | 业务逻辑                                            |
@@ -895,6 +1013,16 @@
 | `findByCategoryId(Long categoryId)`                                      | 调用`repository.findByCategoryId()`             | 直接查询                                            |
 | `updatePrice(Long id, BigDecimal retailPrice, BigDecimal purchasePrice)` | 更新药品价格                                    | 1. 根据ID查找药品<br>2. 更新价格字段<br>3. 保存药品 |
 | `countByStatus(Integer status)`                                          | 调用`repository.countByStatus()`                | 统计查询                                            |
+| `findSeasonalMedicines(Pageable pageable)`                               | 查找季节性药品                                  | 过滤`isSeasonal=true`的药品，内存分页               |
+| `findPrescriptionMedicines(Pageable pageable)`                           | 查找处方药                                      | 过滤`isPrescription=true`的药品，内存分页           |
+| `findByManufacturer(String manufacturer, Pageable pageable)`             | 根据生产厂家查找                                | 调用`repository.findByManufacturerContaining()`，内存分页 |
+| `findLowStockMedicines(Pageable pageable)`                               | 查找库存不足的药品                              | 比较库存总量与预警阈值，内存分页                    |
+| `getMedicineSalesStatistics(Long medicineId)`                            | 获取药品销售统计                                | 统计销售总量、销售趋势等                            |
+| `getMedicinePurchaseStatistics(Long medicineId)`                         | 获取药品采购统计                                | 统计采购总量                                        |
+| `batchUpdateStatus(List<Long> medicineIds, Integer status)`              | 批量更新药品状态                                | 批量查询并更新状态                                  |
+| `findExpiringMedicines(int daysThreshold, Pageable pageable)`            | 查找即将过期的药品                              | 查询即将过期的库存关联的药品，内存分页              |
+| `findByStorageRequirement(Integer storageRequirement, Pageable pageable)` | 根据存储要求查找药品                           | 过滤指定存储要求的药品，内存分页                    |
+| `searchMedicinesWithPagination(String keyword, Pageable pageable)`       | 搜索药品（分页）                                | 调用`repository.searchMedicines()`，内存分页        |
 
 ---
 
@@ -912,7 +1040,7 @@
 **方法列表**：
 
 | 方法签名                                                                                                                            | 返回类型                 | 参数                                                                                         | 描述                       | 返回值说明                                                                 | 失败情况返回值                                    |
-| ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | -------------------------------------------------------------------------------------------- | -------------------------- |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | -------------------------------------------------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------- |
 | `List<PredictionResult> findByMedicineId(Long medicineId)`                                                                          | `List<PredictionResult>` | `medicineId`: 药品ID                                                                         | 根据药品ID查找预测结果     | 返回指定药品的所有预测结果列表，若不存在则返回空列表                       | 返回空列表                                        |
 | `List<PredictionResult> findByPredictionDate(LocalDate predictionDate)`                                                             | `List<PredictionResult>` | `predictionDate`: 预测日期                                                                   | 根据预测日期查找           | 返回指定日期的所有预测结果列表，若不存在则返回空列表                       | 返回空列表                                        |
 | `PredictionResult findLatestByMedicineId(Long medicineId)`                                                                          | `PredictionResult`       | `medicineId`: 药品ID                                                                         | 查找某个药品最新的预测结果 | 返回指定药品的最新预测结果，按预测日期降序排列                             | 找不到时返回null                                  |
@@ -940,8 +1068,21 @@
 **类注解说明**：
 - `@Service`：Spring注解，标识为服务组件
 - `@Transactional`：类级别事务注解
+- `@Slf4j`：Lombok日志注解
+- `@Deprecated`：标记该类已弃用
+
+**配置属性**：
+| 属性名 | 默认值 | 描述 |
+| ------ | ------ | ---- |
+| `model.service.base-url` | `http://localhost:5101` | 模型服务端基础URL |
+| `model.service.api-version` | `/api/v1` | 模型服务API版本 |
+| `prediction.default-days` | `7` | 默认预测天数 |
+| `prediction.confidence-interval-factor` | `0.2` | 置信区间因子 |
+| `inventory.safety-stock-factor` | `0.5` | 安全库存因子 |
 
 **依赖注入**：
+- `@Autowired private RestTemplate restTemplate`
+- `@Autowired private ObjectMapper objectMapper`
 - `@Autowired private MedicineRepository medicineRepository`
 - `@Autowired private StockRepository stockRepository`
 
@@ -955,13 +1096,23 @@
 | `findByPredictionDateRange(LocalDate startDate, LocalDate endDate)`                                          | 调用`repository.findByPredictionDateBetween()`                    | 日期范围查询                                                             |                                |
 | `findNeedReprediction(Double threshold)`                                                                     | 调用`repository.findNeedReprediction()`                           | 查找准确率低于阈值或预测日期已过的记录                                   |                                |
 | `getAverageAccuracyByModel()`                                                                                | 调用`repository.findAverageAccuracyByModel()`，转换为Map          | 统计各模型平均准确率                                                     |                                |
-| `generatePrediction(Long medicineId, String modelType, LocalDate predictionDate)`                            | 生成单个药品的预测结果                                            | 1. 查找药品<br>2. 计算预测数量<br>3. 设置置信区间<br>4. 计算建议订购数量 | **部分算法为演示用途，需完善** |
-| `generateBatchPredictions(List<Long> medicineIds, String modelType, LocalDate startDate, LocalDate endDate)` | 批量生成预测结果                                                  | 为每个药品生成指定日期范围内的预测                                       |                                |
-| `getRecommendedOrderQuantities(LocalDate targetDate)`                                                        | 获取所有药品的建议订购数量                                        | 1. 获取所有启用药品<br>2. 批量查询最新预测<br>3. 组装推荐数量映射        | 已优化为批量查询，避免N+1问题  |
+| `generatePrediction(Long medicineId, String modelType, LocalDate predictionDate)`                            | 生成单个药品的预测结果                                            | 1. 查找药品<br>2. 调用模型端API<br>3. 失败时使用本地算法 | **已弃用** |
+| `generateBatchPredictions(List<Long> medicineIds, String modelType, LocalDate startDate, LocalDate endDate)` | 批量生成预测结果                                                  | 调用模型端批量预测API，失败时使用本地算法                                | **已弃用** |
+| `getRecommendedOrderQuantities(LocalDate targetDate)`                                                        | 获取所有药品的建议订购数量                                        | 1. 获取所有启用药品<br>2. 批量查询最新预测<br>3. 组装推荐数量映射        | **已弃用** |
+| `checkModelServiceHealth()`                                                                                  | 检查模型端服务健康状态                                            | 发送健康检查请求                                                         |                                |
+| `getModelServiceInfo()`                                                                                      | 获取模型端服务信息                                                | 返回服务URL、版本、健康状态等信息                                        |                                |
 
 **辅助方法**：
-- `calculatePredictedQuantity(Long medicineId)`：计算预测数量（示例算法）**待完善**
-- `calculateRecommendedOrderQuantity(Long medicineId, int predictedQuantity)`：计算建议订购数量（考虑当前库存和安全库存）
+- `callModelPredictionApi(Long medicineId, LocalDate predictionDate)`：调用模型端单个预测API
+- `callBatchPredictionApi(List<Long> medicineIds, LocalDate startDate, LocalDate endDate)`：调用模型端批量预测API
+- `getHistoricalPredictions(Long medicineId)`：获取历史预测记录
+- `createPredictionResultFromModelResponse(...)`：从模型响应创建预测结果
+- `createBatchPredictionsFromModelResponse(...)`：从批量响应创建预测结果
+- `generateLocalPrediction(...)`：本地预测算法（API失败时使用）
+- `generateLocalBatchPredictions(...)`：本地批量预测算法
+- `calculateAccuracyRate(...)`：计算预测准确率
+- `calculateLocalPredictedQuantity(...)`：本地算法计算预测数量
+- `calculateRecommendedOrderQuantity(...)`：计算建议订购数量
 
 ---
 
@@ -979,7 +1130,7 @@
 **方法列表**：
 
 | 方法签名                                                                                                        | 返回类型              | 参数                                                             | 描述                         | 返回值说明                                                                 | 失败情况返回值                       |
-| --------------------------------------------------------------------------------------------------------------- | --------------------- | ---------------------------------------------------------------- | ---------------------------- |
+| --------------------------------------------------------------------------------------------------------------- | --------------------- | ---------------------------------------------------------------- | ---------------------------- | -------------------------------------------------------------------------- | ------------------------------------ |
 | `PurchaseOrder findByOrderNo(String orderNo)`                                                                   | `PurchaseOrder`       | `orderNo`: 订单编号                                              | 根据订单号查找采购订单       | 返回指定订单号的采购订单对象                                               | 找不到时返回null                     |
 | `Page<PurchaseOrder> findAll(Pageable pageable)`                                                                | `Page<PurchaseOrder>` | `pageable`: 分页参数                                             | 分页查询所有采购订单         | 返回包含所有采购订单的分页对象，包含分页信息和数据列表                     | 无数据时返回空Page对象               |
 | `Page<PurchaseOrder> findByOrderStatus(Integer orderStatus, Pageable pageable)`                                 | `Page<PurchaseOrder>` | `orderStatus`: 订单状态, `pageable`: 分页参数                    | 根据订单状态分页查找         | 返回指定订单状态的采购订单分页对象，包含分页信息和数据列表                 | 无数据时返回空Page对象               |
@@ -998,6 +1149,13 @@
 | `Map<String, Object> getOrderStatistics()`                                                                      | `Map<String, Object>` | 无                                                               | 获取采购订单统计信息         | 返回采购订单的统计信息，包含总订单数、各状态订单数、总金额等数据           | 无数据时返回包含默认值的Map          |
 | `Map<String, Long> countByStatus()`                                                                             | `Map<String, Long>`   | 无                                                               | 按状态统计采购订单数量       | 返回各状态的采购订单数量映射，键为状态值，值为对应状态的订单数             | 无数据时返回空Map                    |
 | `Map<String, Object> getMonthlyStatistics(LocalDate startDate, LocalDate endDate)`                              | `Map<String, Object>` | `startDate`: 开始日期, `endDate`: 结束日期                       | 获取月度统计信息             | 返回指定日期范围内的月度采购统计信息，包含每月订单数、金额等数据           | 无数据时返回包含默认值的Map          |
+| `Page<Map<String, Object>> getSupplierPurchaseStatistics(Pageable pageable)`                                    | `Page<Map>`           | `pageable`: 分页参数                                             | 获取供应商采购统计（分页）   | 返回各供应商的采购统计信息分页对象                                         | 返回空Page对象                       |
+| `Page<PurchaseOrder> findUpcomingOrders(Pageable pageable)`                                                     | `Page<PurchaseOrder>` | `pageable`: 分页参数                                             | 查找即将到来的采购订单       | 返回预计到货日期临近的采购订单分页对象                                     | 返回空Page对象                       |
+| `void batchConfirmOrders(List<Long> orderIds)`                                                                  | `void`                | `orderIds`: 订单ID列表                                           | 批量确认采购订单             | 无返回值                                                                   | 无                                   |
+| `void batchCancelOrders(List<Long> orderIds)`                                                                   | `void`                | `orderIds`: 订单ID列表                                           | 批量取消采购订单             | 无返回值                                                                   | 无                                   |
+| `Page<Map<String, Object>> getPurchaseSuggestions(Pageable pageable)`                                           | `Page<Map>`           | `pageable`: 分页参数                                             | 获取采购建议（分页）         | 返回基于库存和销售数据的采购建议分页对象                                   | 返回空Page对象                       |
+| `Page<Map<String, Object>> getPurchaseByCategory(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable)` | `Page<Map>`      | `startDate`: 开始时间, `endDate`: 结束时间, `pageable`: 分页参数 | 按分类统计采购数据（分页）   | 返回各分类的采购统计信息分页对象                                           | 返回空Page对象                       |
+| `Map<String, Object> getOrderDetailsWithMedicine(Long orderId)`                                                 | `Map<String, Object>` | `orderId`: 订单ID                                             | 获取订单详情（含药品信息）   | 返回包含订单和药品详细信息的映射                                           | 返回空Map                            |
 
 **实现类**：`PurchaseOrderServiceImpl`
 
@@ -1015,7 +1173,11 @@
 - `@Service`：Spring注解，标识为服务组件
 - `@Transactional`：类级别事务注解
 
-**依赖注入**：`@Autowired private UserService userService`
+**依赖注入**：
+- `@Autowired private UserService userService`
+- `@Autowired private MedicineRepository medicineRepository`
+- `@Autowired private SaleRecordRepository saleRepository`
+- `@Autowired private StockRepository stockRepository`
 
 **主要方法实现**：
 
@@ -1039,6 +1201,13 @@
 | `findByOrderTimeBetween(LocalDateTime startTime, LocalDateTime endTime, Pageable pageable)` | 内存分页处理                                        | 从查询结果中手动分页                                           |
 | `countByStatus()`                                                                           | 统计各状态订单数量                                  | 调用`repository.findByOrderStatus()`并计数                     |
 | `getMonthlyStatistics(LocalDate startDate, LocalDate endDate)`                              | 获取月度统计信息                                    | 多维度统计：状态、金额、药品、供应商、月份等                   |
+| `getSupplierPurchaseStatistics(Pageable pageable)`                                          | 获取供应商采购统计                                  | 调用`repository.findSupplierPurchaseStatistics()`，内存分页    |
+| `findUpcomingOrders(Pageable pageable)`                                                     | 查找即将到来的订单                                  | 调用`repository.findUpcomingOrders()`，内存分页                |
+| `batchConfirmOrders(List<Long> orderIds)`                                                   | 批量确认订单                                        | 遍历订单ID列表，确认待处理订单                                 |
+| `batchCancelOrders(List<Long> orderIds)`                                                    | 批量取消订单                                        | 遍历订单ID列表，取消未到货订单                                 |
+| `getPurchaseSuggestions(Pageable pageable)`                                                 | 获取采购建议                                        | 基于库存和销售数据生成采购建议，内存分页                       |
+| `getPurchaseByCategory(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable)`  | 按分类统计采购                                      | 汇总各分类的采购数量和金额，内存分页                           |
+| `getOrderDetailsWithMedicine(Long orderId)`                                                 | 获取订单详情                                        | 返回包含订单和药品详细信息的映射                               |
 
 ---
 
@@ -1056,7 +1225,7 @@
 **方法列表**：
 
 | 方法签名                                                                                        | 返回类型                    | 参数                                           | 描述                       | 返回值说明                                                                        | 失败情况返回值                           |
-| ----------------------------------------------------------------------------------------------- | --------------------------- | ---------------------------------------------- | -------------------------- |
+| ----------------------------------------------------------------------------------------------- | --------------------------- | ---------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------- |
 | `SaleRecord findByRecordNo(String recordNo)`                                                    | `SaleRecord`                | `recordNo`: 销售单号                           | 根据销售单号查找销售记录   | 返回指定销售单号的销售记录对象                                                    | 找不到时返回null                         |
 | `Page<SaleRecord> findAll(Pageable pageable)`                                                   | `Page<SaleRecord>`          | `pageable`: 分页参数                           | 分页查询所有销售记录       | 返回包含所有销售记录的分页对象，包含分页信息和数据列表                            | 无数据时返回空Page对象                   |
 | `List<SaleRecord> findBySaleTimeBetween(LocalDateTime startTime, LocalDateTime endTime)`        | `List<SaleRecord>`          | `startTime`: 开始时间, `endTime`: 结束时间     | 根据时间段查找销售记录     | 返回指定时间段内的销售记录列表，按销售时间排序                                    | 无数据时返回空列表                       |
@@ -1065,8 +1234,16 @@
 | `Double getTotalSalesByPeriod(LocalDateTime startTime, LocalDateTime endTime)`                  | `Double`                    | `startTime`: 开始时间, `endTime`: 结束时间     | 获取时间段内的销售总额     | 返回指定时间段内的销售总金额                                                      | 无数据时返回0.0                          |
 | `Integer getTotalQuantityByMedicineId(Long medicineId)`                                         | `Integer`                   | `medicineId`: 药品ID                           | 获取某个药品的销售总量     | 返回指定药品的销售总数量                                                          | 无数据时返回0                            |
 | `List<Map<String, Object>> getDailySalesReport(LocalDateTime startDate, LocalDateTime endDate)` | `List<Map<String, Object>>` | `startDate`: 开始日期, `endDate`: 结束日期     | 获取每日销售报表           | 返回指定日期范围内的每日销售报表，每个Map包含日期、销售额、销售数量等信息         | 无数据时返回空列表                       |
-| `List<Map<String, Object>> getTopSellingMedicines(int limit)`                                   | `List<Map<String, Object>>` | `limit`: 限制数量                              | 获取最畅销药品（最近30天） | 返回最近30天内最畅销的药品列表，每个Map包含药品ID、名称、销售数量、销售金额等信息 | 无数据时返回空列表                       |
+| `List<Map<String, Object>> getTopSellingMedicines(int limit, LocalDateTime startDate, LocalDateTime endDate)` | `List<Map>`     | `limit`: 限制数量, `startDate`: 开始日期, `endDate`: 结束日期 | 获取最畅销药品 | 返回指定日期范围内最畅销的药品列表，每个Map包含药品ID、销售数量、销售金额等信息 | 无数据时返回空列表                       |
 | `SaleRecord createSaleRecord(SaleRecord saleRecord, Long operatorId)`                           | `SaleRecord`                | `saleRecord`: 销售记录, `operatorId`: 操作员ID | 创建销售记录               | 返回创建成功的销售记录对象，包含生成的销售单号和状态                              | 销售记录参数无效或操作员不存在时返回null |
+| `Page<SaleRecord> findByCustomerType(Integer customerType, Pageable pageable)`                  | `Page<SaleRecord>`          | `customerType`: 顾客类型, `pageable`: 分页参数 | 根据顾客类型查找销售记录   | 返回指定顾客类型的销售记录分页对象                                                | 返回空Page对象                           |
+| `Page<Map<String, Object>> getSalesByCategory(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable)` | `Page<Map>` | `startDate`: 开始日期, `endDate`: 结束日期, `pageable`: 分页参数 | 按分类统计销售数据 | 返回各分类的销售统计信息分页对象                                          | 返回空Page对象                           |
+| `Page<Map<String, Object>> getSalesBySymptom(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable)` | `Page<Map>` | `startDate`: 开始日期, `endDate`: 结束日期, `pageable`: 分页参数 | 按症状统计销售数据 | 返回各症状的销售统计信息分页对象                                          | 返回空Page对象                           |
+| `Map<String, Object> getOperatorSalesPerformance(LocalDateTime startDate, LocalDateTime endDate)` | `Map<String, Object>`   | `startDate`: 开始日期, `endDate`: 结束日期     | 获取操作员销售业绩         | 返回各操作员的销售业绩统计信息                                                    | 返回空Map                                |
+| `Page<Map<String, Object>> getMonthlySalesTrend(int months, Pageable pageable)`                 | `Page<Map>`                 | `months`: 月份数, `pageable`: 分页参数         | 获取月度销售趋势           | 返回最近N个月的销售趋势数据分页对象                                               | 返回空Page对象                           |
+| `Page<Map<String, Object>> getSalesPrediction(int days, Pageable pageable)`                     | `Page<Map>`                 | `days`: 天数, `pageable`: 分页参数             | 获取销售预测               | 返回未来N天的销售预测数据分页对象                                                 | 返回空Page对象                           |
+| `Page<SaleRecord> findPrescriptionSales(Pageable pageable)`                                     | `Page<SaleRecord>`          | `pageable`: 分页参数                           | 查找处方药销售记录         | 返回处方药销售记录分页对象                                                        | 返回空Page对象                           |
+| `Map<String, Object> getSalesStatisticsByPeriod(LocalDateTime startDate, LocalDateTime endDate)` | `Map<String, Object>`      | `startDate`: 开始日期, `endDate`: 结束日期     | 获取销售统计信息           | 返回指定日期范围内的销售统计信息，包含总额、记录数、平均金额等                    | 返回空Map                                |
 
 **实现类**：`SaleRecordServiceImpl`
 
@@ -1098,8 +1275,16 @@
 | `getTotalSalesByPeriod(LocalDateTime startTime, LocalDateTime endTime)` | 调用`repository.sumTotalAmountByPeriod()`     | 统计时间段销售总额                                               |
 | `getTotalQuantityByMedicineId(Long medicineId)`                         | 调用`repository.sumQuantityByMedicineId()`    | 统计药品销售总量                                                 |
 | `getDailySalesReport(LocalDateTime startDate, LocalDateTime endDate)`   | 调用`repository.findDailySales()`，格式化日期 | 统计每天的销售数据                                               |
-| `getTopSellingMedicines(int limit)`                                     | 调用`repository.findTopSellingMedicines()`    | 获取最近30天最畅销药品                                           |
+| `getTopSellingMedicines(int limit, LocalDateTime startDate, LocalDateTime endDate)` | 调用`repository.findTopSellingMedicines()` | 获取最畅销药品                                                   |
 | `createSaleRecord(SaleRecord saleRecord, Long operatorId)`              | 创建销售记录                                  | 1. 设置操作员<br>2. 生成销售单号<br>3. 计算总金额<br>4. 保存记录 |
+| `findByCustomerType(Integer customerType, Pageable pageable)`           | 根据顾客类型查找                              | 调用`repository.findByCustomerType()`，内存分页                  |
+| `getSalesByCategory(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable)` | 按分类统计销售数据                  | 汇总各分类的销售数据，内存分页                                   |
+| `getSalesBySymptom(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable)` | 按症状统计销售数据                   | 调用`repository.findSalesBySymptom()`，内存分页                  |
+| `getOperatorSalesPerformance(LocalDateTime startDate, LocalDateTime endDate)` | 获取操作员销售业绩                      | 调用`repository.findOperatorSalesPerformance()`                  |
+| `getMonthlySalesTrend(int months, Pageable pageable)`                   | 获取月度销售趋势                              | 调用`repository.findDailySalesAmount()`，内存分页                |
+| `getSalesPrediction(int days, Pageable pageable)`                       | 获取销售预测                                  | 简化实现，返回模拟预测数据，内存分页                             |
+| `findPrescriptionSales(Pageable pageable)`                              | 查找处方药销售                                | 过滤`isRx=true`的销售记录，内存分页                              |
+| `getSalesStatisticsByPeriod(LocalDateTime startDate, LocalDateTime endDate)` | 获取销售统计信息                         | 统计销售总额、记录数、平均金额等                                 |
 
 ---
 
@@ -1117,7 +1302,7 @@
 **方法列表**：
 
 | 方法签名                                                                                              | 返回类型              | 参数                                                                                      | 描述                         | 返回值说明                                                             | 失败情况返回值                  |
-| ----------------------------------------------------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------- | ---------------------------- |
+| ----------------------------------------------------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------- | ---------------------------- | ---------------------------------------------------------------------- | ------------------------------- |
 | `Page<Stock> findByMedicineId(Long medicineId, Pageable pageable)`                                    | `Page<Stock>`         | `medicineId`: 药品ID, `pageable`: 分页参数                                                | 根据药品ID分页查找库存       | 返回指定药品的库存分页对象，包含分页信息和数据列表                     | 无数据时返回空Page对象          |
 | `Integer getTotalStock(Long medicineId)`                                                              | `Integer`             | `medicineId`: 药品ID                                                                      | 获取某个药品的总库存量       | 返回指定药品的总库存量，包括所有批次的库存数量总和                     | 药品不存在或无库存时返回0       |
 | `Page<Stock> getExpiringStock(LocalDate startDate, LocalDate endDate, Pageable pageable)`             | `Page<Stock>`         | `startDate`: 开始日期, `endDate`: 结束日期, `pageable`: 分页参数                          | 获取即将过期的库存           | 返回指定日期范围内即将过期的库存分页对象，包含分页信息和数据列表       | 无数据时返回空Page对象          |
@@ -1134,6 +1319,15 @@
 | `Page<Stock> findByMedicineIdAndBatchNumber(Long medicineId, String batchNumber, Pageable pageable)`  | `Page<Stock>`         | `medicineId`: 药品ID, `batchNumber`: 批号, `pageable`: 分页参数                           | 根据药品ID和批号联合查找     | 返回指定药品ID和批号的库存分页对象，包含分页信息和数据列表             | 无数据时返回空Page对象          |
 | `Page<Stock> findExpiredStock(Pageable pageable)`                                                     | `Page<Stock>`         | `pageable`: 分页参数                                                                      | 查找已过期的库存             | 返回已过期的库存分页对象，包含分页信息和数据列表                       | 无数据时返回空Page对象          |
 | `Page<Stock> findNearExpiryStock(int days, Pageable pageable)`                                        | `Page<Stock>`         | `days`: 天数, `pageable`: 分页参数                                                        | 查找即将过期的库存           | 返回指定天数内即将过期的库存分页对象，包含分页信息和数据列表           | 无数据时返回空Page对象          |
+| `Double calculateStockTurnoverRate(String period)`                                                    | `Double`              | `period`: 时间段(week/month/quarter/year)                                                 | 计算库存周转率               | 返回指定时间段内的库存周转率                                           | 无数据时返回0.0                 |
+| `Double calculateTotalStockValue()`                                                                   | `Double`              | 无                                                                                        | 计算库存总价值               | 返回所有库存的总价值                                                   | 无数据时返回0.0                 |
+| `Map<String, Object> getStockValueByCategory()`                                                       | `Map<String, Object>` | 无                                                                                        | 按分类获取库存价值           | 返回各分类的库存价值映射                                               | 返回空Map                       |
+| `Page<Stock> getStockAlerts(Pageable pageable)`                                                       | `Page<Stock>`         | `pageable`: 分页参数                                                                      | 获取库存预警信息             | 返回低库存和即将过期库存的预警分页对象                                 | 返回空Page对象                  |
+| `void transferStock(Long fromStockId, Long toStockId, Integer quantity)`                              | `void`                | `fromStockId`: 转出库存ID, `toStockId`: 转入库存ID, `quantity`: 数量                      | 库存调拨                     | 无返回值，将库存从一个批次转移到另一个批次                             | 库存不足时抛出异常              |
+| `void setMinimumStockLevel(Long medicineId, Integer minLevel)`                                        | `void`                | `medicineId`: 药品ID, `minLevel`: 最小库存级别                                            | 设置最小库存级别             | 无返回值，设置药品的最小预警库存级别                                   | 无                              |
+| `Map<Long, Object> getStockInventoryReport()`                                                         | `Map<Long, Object>`   | 无                                                                                        | 获取库存盘点报告             | 返回所有库存的盘点信息映射                                             | 返回空Map                       |
+| `Page<Stock> findByStorageCondition(Integer condition, Pageable pageable)`                            | `Page<Stock>`         | `condition`: 存储条件, `pageable`: 分页参数                                               | 根据存储条件查找库存         | 返回指定存储条件的库存分页对象                                         | 返回空Page对象                  |
+| `Page<Stock> findByShelfLocationContaining(String location, Pageable pageable)`                       | `Page<Stock>`         | `location`: 货架位置关键词, `pageable`: 分页参数                                          | 根据货架位置模糊查找库存     | 返回货架位置包含关键词的库存分页对象                                   | 返回空Page对象                  |
 
 **实现类**：`StockServiceImpl`
 
@@ -1175,6 +1369,15 @@
 | `findByMedicineIdAndBatchNumber(Long medicineId, String batchNumber, Pageable pageable)`         | 内存分页处理                                      | 联合查询药品ID和批号                       |
 | `findExpiredStock(Pageable pageable)`                                                            | 内存分页处理                                      | 查找已过期的库存                           |
 | `findNearExpiryStock(int days, Pageable pageable)`                                               | 内存分页处理                                      | 查找即将过期的库存                         |
+| `calculateStockTurnoverRate(String period)`                                                      | 计算库存周转率                                    | 根据时间段计算平均周转率                   |
+| `calculateTotalStockValue()`                                                                     | 计算库存总价值                                    | 调用`repository.calculateTotalStockValue()` |
+| `getStockValueByCategory()`                                                                      | 按分类获取库存价值                                | 调用`repository.calculateStockValueByCategory()` |
+| `getStockAlerts(Pageable pageable)`                                                              | 获取库存预警信息                                  | 合并低库存和即将过期预警，内存分页         |
+| `transferStock(Long fromStockId, Long toStockId, Integer quantity)`                              | 库存调拨                                          | 减少转出库存，增加转入库存                 |
+| `setMinimumStockLevel(Long medicineId, Integer minLevel)`                                        | 设置最小库存级别                                  | 更新药品所有批次的预警数量                 |
+| `getStockInventoryReport()`                                                                      | 获取库存盘点报告                                  | 返回所有库存的详细信息映射                 |
+| `findByStorageCondition(Integer condition, Pageable pageable)`                                   | 根据存储条件查找库存                              | 根据药品存储要求过滤，内存分页             |
+| `findByShelfLocationContaining(String location, Pageable pageable)`                              | 根据货架位置模糊查找                              | 调用`repository.findByShelfLocationContaining()` |
 
 ---
 
@@ -1192,7 +1395,7 @@
 **方法列表**：
 
 | 方法签名                                                          | 返回类型        | 参数                                    | 描述                           | 返回值说明                                                  | 失败情况返回值             |
-| ----------------------------------------------------------------- | --------------- | --------------------------------------- | ------------------------------ |
+| ----------------------------------------------------------------- | --------------- | --------------------------------------- | ------------------------------ | ----------------------------------------------------------- | -------------------------- |
 | `Symptom findByName(String name)`                                 | `Symptom`       | `name`: 症状名称                        | 根据名称查找症状               | 返回指定名称的症状对象                                      | 找不到时返回null           |
 | `List<Symptom> findByNameContaining(String name)`                 | `List<Symptom>` | `name`: 症状名称                        | 根据名称模糊查询               | 返回名称包含指定字符串的症状列表                            | 无匹配时返回空列表         |
 | `boolean existsByName(String name)`                               | `boolean`       | `name`: 症状名称                        | 检查症状名称是否存在           | 返回症状名称是否存在的布尔值，true表示存在，false表示不存在 | 无特殊情况，始终返回布尔值 |
@@ -1202,6 +1405,11 @@
 | `Page<Symptom> searchSymptoms(String keyword, Pageable pageable)` | `Page<Symptom>` | `keyword`: 关键词, `pageable`: 分页参数 | 搜索症状并分页                 | 返回根据关键词搜索的症状分页对象，包含分页信息和数据列表    | 无匹配时返回空Page对象     |
 | `List<Symptom> saveAll(List<Symptom> symptoms)`                   | `List<Symptom>` | `symptoms`: 症状列表                    | 批量保存症状                   | 返回批量保存成功的症状列表                                  | 保存失败时抛出异常         |
 | `long countAll()`                                                 | `long`          | 无                                      | 统计所有症状数量               | 返回所有症状的总数量                                        | 无数据时返回0              |
+| `Page<Symptom> findByMedicineId(Long medicineId, Pageable pageable)` | `Page<Symptom>` | `medicineId`: 药品ID, `pageable`: 分页参数 | 根据药品ID查找关联症状    | 返回指定药品关联的症状分页对象                              | 返回空Page对象             |
+| `Page<Symptom> findMostCommonSymptoms(int limit, LocalDateTime start, LocalDateTime end, Pageable pageable)` | `Page<Symptom>` | `limit`: 限制数量, `start`: 开始时间, `end`: 结束时间, `pageable`: 分页参数 | 查找最常见的症状 | 返回指定时间段内最常见的症状分页对象                      | 返回空Page对象             |
+| `Map<String, Object> getSymptomUsageStatistics(Integer symptomId)` | `Map<String, Object>` | `symptomId`: 症状ID               | 获取症状使用统计信息           | 返回症状的药品关联数量、销售记录数量、销售金额等统计信息    | 返回空Map                  |
+| `Page<Symptom> findSymptomsWithMedicines(Pageable pageable)`      | `Page<Symptom>` | `pageable`: 分页参数                    | 查找有关联药品的症状           | 返回至少关联一个药品的症状分页对象                          | 返回空Page对象             |
+| `Page<Symptom> findBySaleRecordId(Long saleRecordId, Pageable pageable)` | `Page<Symptom>` | `saleRecordId`: 销售记录ID, `pageable`: 分页参数 | 根据销售记录查找关联症状 | 返回指定销售记录关联的症状分页对象                        | 返回空Page对象             |
 
 **实现类**：`SymptomServiceImpl`
 
@@ -1216,6 +1424,10 @@
 **类注解说明**：
 - `@Service`：Spring注解，标识为服务组件
 - `@Transactional`：类级别事务注解
+
+**依赖注入**：
+- `@Autowired private MedicineRepository medicineRepository`
+- `@Autowired private SaleRecordRepository saleRecordRepository`
 
 **主要方法实现**：
 
@@ -1232,9 +1444,11 @@
 | `countAll()`                                        | 调用`repository.count()`                       | 统计数量             |
 | `save(Symptom symptom)`                             | 保存症状（名称唯一性检查）                     | 检查症状名称是否重复 |
 | `deleteAll(List<Integer> ids)`                      | 批量删除症状                                   | 循环调用删除         |
-
-**未实现方法**：
-- 旧文档中提到的`findTopSymptoms(int limit)`方法在本版本中未实现
+| `findByMedicineId(Long medicineId, Pageable pageable)` | 根据药品ID查找关联症状                      | 查询药品关联的症状，内存分页 |
+| `findMostCommonSymptoms(int limit, LocalDateTime start, LocalDateTime end, Pageable pageable)` | 查找最常见的症状 | 调用`repository.findMostCommonSymptoms()`，内存分页 |
+| `getSymptomUsageStatistics(Integer symptomId)`      | 获取症状使用统计信息                           | 统计药品关联数量、销售记录数量、销售金额等 |
+| `findSymptomsWithMedicines(Pageable pageable)`      | 查找有关联药品的症状                           | 检查每个症状的药品关联数量，内存分页 |
+| `findBySaleRecordId(Long saleRecordId, Pageable pageable)` | 根据销售记录查找关联症状              | 查询销售记录关联的症状，内存分页 |
 
 ---
 
@@ -1252,7 +1466,7 @@
 **方法列表**：
 
 | 方法签名                                                      | 返回类型     | 参数                                    | 描述                   | 返回值说明                                                | 失败情况返回值             |
-| ------------------------------------------------------------- | ------------ | --------------------------------------- | ---------------------- |
+| ------------------------------------------------------------- | ------------ | --------------------------------------- | ---------------------- | --------------------------------------------------------- | -------------------------- |
 | `User findByUsername(String username)`                        | `User`       | `username`: 用户名                      | 根据用户名查找用户     | 返回指定用户名的用户对象                                  | 找不到时返回null           |
 | `User login(String username, String password)`                | `User`       | `username`: 用户名, `password`: 密码    | 用户登录验证           | 登录成功返回用户对象，包含用户信息（不含密码）            | 用户名或密码错误时返回null |
 | `User matchPassword(User user, String password)`              | `User`       | `user`: 用户对象, `password`: 密码      | 验证用户密码           | 密码验证成功返回用户对象，失败返回null                    | 密码错误时返回null         |
@@ -1336,23 +1550,71 @@
    - 部分服务使用`@Autowired`字段注入额外依赖（如`PredictionResultServiceImpl`、`PurchaseOrderServiceImpl`等）
    - 推荐使用构造函数注入以提高可测试性
 
-### 未实现/待完善功能说明
+### 新增功能说明
 
-根据代码分析，以下功能需要进一步实现或完善：
+根据代码分析，本次更新新增以下功能：
 
-1. **预测管理**：
-   - `calculatePredictedQuantity`方法中的预测算法为简单示例，需要根据实际历史销售数据实现
-   - 预测模型集成需要进一步开发
-2. **库存管理**：
-   - 部分分页查询采用内存分页，大数据量时性能可能受影响
-3. **采购管理**：
-   - 部分分页查询采用内存分页，可优化为数据库分页
-4. **用户管理**：
-   - 密码强度验证未实现
-   - 用户权限细粒度控制需要完善
-1. **性能优化**：
-   - 多个服务中的分页查询采用内存分页，建议优化为数据库级别分页
-   - 预测结果的批量生成算法需要根据实际业务需求完善
+1. **分类管理**：
+   - `findActiveCategories`：查找启用的分类（分页）
+   - `findSubcategoriesByParentId`：根据父分类ID查找子分类（分页）
+   - `getCategoryHierarchy`：获取分类层级结构
+   - `findCategoriesWithMedicines`：查找有关联药品的分类
+   - `getCategoryStatistics`：获取分类统计信息
+
+2. **药品管理**：
+   - `findSeasonalMedicines`：查找季节性药品
+   - `findPrescriptionMedicines`：查找处方药
+   - `findByManufacturer`：根据生产厂家查找
+   - `findLowStockMedicines`：查找库存不足的药品
+   - `getMedicineSalesStatistics`：获取药品销售统计
+   - `getMedicinePurchaseStatistics`：获取药品采购统计
+   - `batchUpdateStatus`：批量更新药品状态
+   - `findExpiringMedicines`：查找即将过期的药品
+   - `findByStorageRequirement`：根据存储要求查找
+   - `searchMedicinesWithPagination`：搜索药品（分页）
+
+3. **预测管理**：
+   - 添加了模型端API调用支持
+   - 添加了配置属性支持
+   - 添加了健康检查方法
+   - 标记为`@Deprecated`，表示该实现将被替换
+
+4. **采购管理**：
+   - `getSupplierPurchaseStatistics`：获取供应商采购统计
+   - `findUpcomingOrders`：查找即将到来的订单
+   - `batchConfirmOrders`：批量确认订单
+   - `batchCancelOrders`：批量取消订单
+   - `getPurchaseSuggestions`：获取采购建议
+   - `getPurchaseByCategory`：按分类统计采购
+   - `getOrderDetailsWithMedicine`：获取订单详情（含药品信息）
+
+5. **销售管理**：
+   - `findByCustomerType`：根据顾客类型查找
+   - `getSalesByCategory`：按分类统计销售
+   - `getSalesBySymptom`：按症状统计销售
+   - `getOperatorSalesPerformance`：获取操作员销售业绩
+   - `getMonthlySalesTrend`：获取月度销售趋势
+   - `getSalesPrediction`：获取销售预测
+   - `findPrescriptionSales`：查找处方药销售
+   - `getSalesStatisticsByPeriod`：获取销售统计信息
+
+6. **库存管理**：
+   - `calculateStockTurnoverRate`：计算库存周转率
+   - `calculateTotalStockValue`：计算库存总价值
+   - `getStockValueByCategory`：按分类获取库存价值
+   - `getStockAlerts`：获取库存预警信息
+   - `transferStock`：库存调拨
+   - `setMinimumStockLevel`：设置最小库存级别
+   - `getStockInventoryReport`：获取库存盘点报告
+   - `findByStorageCondition`：根据存储条件查找
+   - `findByShelfLocationContaining`：根据货架位置模糊查找
+
+7. **症状管理**：
+   - `findByMedicineId`：根据药品ID查找关联症状
+   - `findMostCommonSymptoms`：查找最常见的症状
+   - `getSymptomUsageStatistics`：获取症状使用统计
+   - `findSymptomsWithMedicines`：查找有关联药品的症状
+   - `findBySaleRecordId`：根据销售记录查找关联症状
 
 ### 业务逻辑说明
 
@@ -1363,26 +1625,33 @@
 2. **药品管理**：
    - 支持多条件搜索
    - 药品编码唯一性检查
+   - 支持季节性、处方药等特殊属性筛选
 
 3. **预测管理**：
    - 支持多种预测模型
    - 批量生成预测结果
    - 智能推荐订购数量
+   - **注意**：该实现已标记为`@Deprecated`，将被新的实现替换
 
 4. **采购管理**：
    - 订单状态流转控制
    - 自动生成订单号
    - 采购统计功能
+   - 批量操作支持
+   - 采购建议生成
 
 5. **销售管理**：
    - 自动生成销售单号
    - 销售统计分析
    - 畅销药品排名
+   - 多维度销售统计（分类、症状、操作员等）
 
 6. **库存管理**：
    - 库存预警功能
    - 先进先出库存减少
    - 批次库存管理
+   - 库存周转率计算
+   - 库存调拨功能
 
 7. **用户管理**：
    - 密码加密存储
@@ -1393,634 +1662,4 @@
    - 症状名称唯一性检查
    - 多条件搜索
    - 批量操作支持
-
-## 控制器层 (Controller Layer) 文档
-
-### API基本路径
-
-**baseURL**: `/api`
-**端口号**：`8081`
-
-### 1. 类：CategoryController（药品分类控制器）
-
-**位置**：`com.example.demo.controller`
-
-**类注解说明**：
-- `@RestController`：Spring注解，标识为REST风格的控制器
-- `@RequestMapping("/categories")`：设置请求路径前缀
-- `@CrossOrigin(origins = "*")`：允许跨域请求
-
-**方法列表**：
-
-| 方法签名                                                                | HTTP方法 | API路径                           | 参数                                                                    | 描述                                 | 返回值说明                                                                                                 | 失败情况返回值                                                          |
-| ----------------------------------------------------------------------- | -------- | --------------------------------- | ----------------------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `test()`                                                                | GET      | /api/categories/test              | 无                                                                      | 测试接口                             | `{"success": true, "message": "CategoryController is working!"}`                                           | `{"success": false, "message": "操作失败: 错误信息"}`                   |
-| `getAllCategories(int page, int size, String sortBy, String direction)` | GET      | /api/categories                   | page: 页码<br>size: 每页大小<br>sortBy: 排序字段<br>direction: 排序方向 | 获取所有分类（分页）                 | `{"success": true, "currentPage": 页码, "totalItems": 总记录数, "totalPages": 总页数, "data": [分类列表]}` | `{"success": false, "message": "操作失败: 错误信息"}`                   |
-| `getCategoryById(Long id)`                                              | GET      | /api/categories/{id}              | id: 分类ID                                                              | 根据ID获取分类                       | `{"success": true, "data": {分类详情}}`                                                                    | `{"success": false, "message": "分类不存在"}`                           |
-| `createCategory(Category category)`                                     | POST     | /api/categories                   | category: 分类对象                                                      | 创建新分类                           | `{"success": true, "message": "分类创建成功", "data": {分类详情}}`                                         | `{"success": false, "message": "分类名称已存在"}`                       |
-| `updateCategory(Long id, Category category)`                            | PUT      | /api/categories/{id}              | id: 分类ID<br>category: 分类对象                                        | 更新分类信息                         | `{"success": true, "message": "分类更新成功", "data": {分类详情}}`                                         | `{"success": false, "message": "分类不存在"}`                           |
-| `deleteCategory(Long id)`                                               | DELETE   | /api/categories/{id}              | id: 分类ID                                                              | 删除分类                             | `{"success": true, "message": "分类删除成功"}`                                                             | `{"success": false, "message": "该分类下存在药品，无法删除"}`           |
-| `getCategoriesByParentId(Long parentId)`                                | GET      | /api/categories/parent/{parentId} | parentId: 父分类ID                                                      | 根据父分类ID获取子分类列表           | `{"success": true, "data": [子分类列表]}`                                                                  | `{"success": false, "message": "未找到符合条件的分类"}`                 |
-| `getRootCategories()`                                                   | GET      | /api/categories/roots             | 无                                                                      | 获取所有一级分类（根分类）           | `{"success": true, "data": [根分类列表]}`                                                                  | `{"success": false, "message": "操作失败: 错误信息"}`                   |
-| `getCategoryTree()`                                                     | GET      | /api/categories/tree              | 无                                                                      | 获取分类树形结构                     | `{"success": true, "data": [分类树结构]}`                                                                  | `{"success": false, "message": "操作失败: 错误信息"}`                   |
-| `getCategoryPath(Long id)`                                              | GET      | /api/categories/{id}/path         | id: 分类ID                                                              | 获取分类路径映射                     | `{"success": true, "data": {路径映射}}`                                                                    | `{"success": false, "message": "分类不存在"}`                           |
-| `getCategoriesByLevel(Integer level)`                                   | GET      | /api/categories/level/{level}     | level: 分类级别                                                         | 根据分类级别查找分类                 | `{"success": true, "data": [分类列表]}`                                                                    | `{"success": false, "message": "操作失败: 错误信息"}`                   |
-| `checkCategoryNameExists(String name)`                                  | GET      | /api/categories/check-name/{name} | name: 分类名称                                                          | 检查分类名称是否存在                 | `{"success": true, "exists": true/false}`                                                                  | `{"success": false, "message": "操作失败: 错误信息"}`                   |
-| `updateCategoryTree()`                                                  | POST     | /api/categories/update-tree       | 无                                                                      | 更新分类树（重新计算所有分类的级别） | `{"success": true, "message": "分类树更新成功"}`                                                           | `{"success": false, "message": "分类树更新失败: 错误信息"}`             |
-| `deleteCategories(List<Long> ids)`                                      | DELETE   | /api/categories/batch             | ids: 分类ID列表                                                         | 批量删除分类                         | `{"success": true, "message": "批量删除成功，共删除 N 个分类"}`                                            | `{"success": false, "message": "ID为 X 的分类不存在"}`                  |
-| `createCategories(List<Category> categories)`                           | POST     | /api/categories/batch             | categories: 分类列表                                                    | 批量保存分类                         | `{"success": true, "message": "批量创建成功，共创建 N 个分类", "data": [分类列表]}`                        | `{"success": false, "message": "分类名称 'X' 已存在"}`                  |
-| `checkCategoryExists(Long id)`                                          | GET      | /api/categories/{id}/exists       | id: 分类ID                                                              | 检查分类是否存在                     | `{"success": true, "exists": true/false}`                                                                  | `{"success": false, "message": "操作失败: 错误信息"}`                   |
-| `searchCategories(String keyword, int page, int size)`                  | GET      | /api/categories/search            | keyword: 关键词<br>page: 页码<br>size: 每页大小                         | 根据关键词搜索分类                   | `{"success": true, "message": "搜索成功", "data": {分页数据}}`                                             | `{"success": false, "message": "关键词不能为空"}`                       |
-| `changeCategoryStatus(Long id, Integer status)`                         | PUT      | /api/categories/{id}/status       | id: 分类ID<br>status: 状态                                              | 修改分类状态                         | `{"success": true, "message": "分类状态更新成功", "data": {分类详情}}`                                     | `{"success": false, "message": "状态值无效，应为0（禁用）或1（启用）"}` |
-| `getCategoryStatistics()`                                               | GET      | /api/categories/statistics        | 无                                                                      | 获取分类统计信息                     | `{"success": true, "data": {统计信息}}`                                                                    | `{"success": false, "message": "操作失败: 错误信息"}`                   |
-
-**返回体结构**：
-
-| 字段名      | 类型         | 描述                 |
-| ----------- | ------------ | -------------------- |
-| success     | boolean      | 操作是否成功         |
-| message     | string       | 操作结果消息         |
-| data        | object/array | 响应数据             |
-| currentPage | number       | 当前页码（分页接口） |
-| totalItems  | number       | 总记录数（分页接口） |
-| totalPages  | number       | 总页数（分页接口）   |
-
-**分类响应对象结构**：
-
-| 字段名      | 类型          | 描述                 |
-| ----------- | ------------- | -------------------- |
-| id          | Long          | 分类ID               |
-| name        | String        | 分类名称             |
-| parentId    | Long          | 父分类ID             |
-| level       | Integer       | 分类级别             |
-| description | String        | 分类描述             |
-| sort        | Integer       | 排序值               |
-| status      | Integer       | 状态：0-禁用，1-启用 |
-| createTime  | LocalDateTime | 创建时间             |
-
-
-### 2. 类：MedicineController（药品控制器）
-
-**位置**：`com.example.demo.controller`
-
-**类注解说明**：
-- `@RestController`：Spring注解，标识为REST风格的控制器
-- `@RequestMapping("/medicines")`：设置请求路径前缀
-- `@CrossOrigin(origins = "*")`：允许跨域请求
-
-**方法列表**：
-
-| 方法签名                                                                         | HTTP方法 | API路径                                  | 参数                                                                    | 描述                               | 返回值说明                                                                                                     | 失败情况返回值                                                          |
-| -------------------------------------------------------------------------------- | -------- | ---------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `test()`                                                                         | GET      | /api/medicines/test                      | 无                                                                      | 测试接口                           | `{"success": true, "message": "MedicineController is working!"}`                                               | `{"success": false, "message": "操作失败: 错误信息"}`                   |
-| `getAllMedicines(int page, int size, String sortBy, String direction)`           | GET      | /api/medicines                           | page: 页码<br>size: 每页大小<br>sortBy: 排序字段<br>direction: 排序方向 | 获取所有药品（分页）               | `{"success": true, "currentPage": 页码, "totalItems": 总记录数, "totalPages": 总页数, "data": [药品列表]}`     | `{"success": false, "message": "操作失败: 错误信息"}`                   |
-| `getMedicineById(Long id)`                                                       | GET      | /api/medicines/{id}                      | id: 药品ID                                                              | 根据ID获取药品                     | `{"success": true, "data": {药品详情}}`                                                                        | `{"success": false, "message": "药品不存在"}`                           |
-| `createMedicine(Medicine medicine)`                                              | POST     | /api/medicines                           | medicine: 药品对象                                                      | 创建新药品                         | `{"success": true, "message": "药品创建成功", "data": {药品详情}}`                                             | `{"success": false, "message": "药品编码已存在"}`                       |
-| `updateMedicine(Long id, Medicine medicine)`                                     | PUT      | /api/medicines/{id}                      | id: 药品ID<br>medicine: 药品对象                                        | 更新药品信息                       | `{"success": true, "message": "药品更新成功", "data": {药品详情}}`                                             | `{"success": false, "message": "药品不存在"}`                           |
-| `deleteMedicine(Long id)`                                                        | DELETE   | /api/medicines/{id}                      | id: 药品ID                                                              | 删除药品                           | `{"success": true, "message": "药品删除成功"}`                                                                 | `{"success": false, "message": "药品存在采购订单"}`                     |
-| `getMedicineByCode(String medicineCode)`                                         | GET      | /api/medicines/code/{medicineCode}       | medicineCode: 药品编码                                                  | 根据药品编码查找药品               | `{"success": true, "data": {药品详情}}`                                                                        | `{"success": false, "message": "药品不存在"}`                           |
-| `getMedicinesByStatus(Integer status, int page, int size)`                       | GET      | /api/medicines/status/{status}           | status: 状态<br>page: 页码<br>size: 每页大小                            | 根据状态分页查询药品               | `{"success": true, "currentPage": 页码, "totalItems": 总记录数, "totalPages": 总页数, "data": [药品列表]}`     | `{"success": false, "message": "状态值无效，应为0（停用）或1（启用）"}` |
-| `searchMedicines(String keyword, int page, int size)`                            | GET      | /api/medicines/search                    | keyword: 关键词<br>page: 页码<br>size: 每页大小                         | 搜索药品（名称、通用名、生产厂家） | `{"success": true, "message": "搜索成功", "data": {分页数据}}`                                                 | `{"success": false, "message": "关键词不能为空"}`                       |
-| `getMedicinesByCategory(Long categoryId, int page, int size)`                    | GET      | /api/medicines/category/{categoryId}     | categoryId: 分类ID<br>page: 页码<br>size: 每页大小                      | 根据分类ID查找药品                 | `{"success": true, "data": {分页数据}}`                                                                        | `{"success": false, "message": "操作失败: 错误信息"}`                   |
-| `updateMedicinePrice(Long id, BigDecimal retailPrice, BigDecimal purchasePrice)` | PUT      | /api/medicines/{id}/price                | id: 药品ID<br>retailPrice: 零售价<br>purchasePrice: 采购价              | 更新药品价格                       | `{"success": true, "message": "药品价格更新成功", "data": {药品详情}}`                                         | `{"success": false, "message": "药品不存在"}`                           |
-| `checkMedicineCodeExists(String medicineCode)`                                   | GET      | /api/medicines/check-code/{medicineCode} | medicineCode: 药品编码                                                  | 检查药品编码是否存在               | `{"success": true, "exists": true/false}`                                                                      | `{"success": false, "message": "操作失败: 错误信息"}`                   |
-| `deleteMedicines(List<Long> ids)`                                                | DELETE   | /api/medicines/batch                     | ids: 药品ID列表                                                         | 批量删除药品                       | `{"success": true, "message": "批量删除成功，共删除 N 个药品"}`                                                | `{"success": false, "message": "ID为 X 的药品不存在"}`                  |
-| `createMedicines(List<Medicine> medicines)`                                      | POST     | /api/medicines/batch                     | medicines: 药品列表                                                     | 批量保存药品                       | `{"success": true, "message": "批量创建成功，共创建 N 个药品", "data": [药品列表]}`                            | `{"success": false, "message": "药品编码 'X' 已存在"}`                  |
-| `checkMedicineExists(Long id)`                                                   | GET      | /api/medicines/{id}/exists               | id: 药品ID                                                              | 检查药品是否存在                   | `{"success": true, "exists": true/false}`                                                                      | `{"success": false, "message": "操作失败: 错误信息"}`                   |
-| `getMedicineStatistics()`                                                        | GET      | /api/medicines/statistics                | 无                                                                      | 获取药品统计信息                   | `{"success": true, "data": {统计信息}}`                                                                        | `{"success": false, "message": "操作失败: 错误信息"}`                   |
-| `changeMedicineStatus(Long id, Integer status)`                                  | PUT      | /api/medicines/{id}/status               | id: 药品ID<br>status: 状态                                              | 修改药品状态                       | `{"success": true, "message": "药品状态更新成功", "data": {药品详情}}`                                         | `{"success": false, "message": "药品不存在"}`                           |
-| `getSimpleMedicineList(int page, int size)`                                      | GET      | /api/medicines/simple                    | page: 页码<br>size: 每页大小                                            | 获取药品简要列表                   | `{"success": true, "currentPage": 页码, "totalItems": 总记录数, "totalPages": 总页数, "data": [药品简要列表]}` | `{"success": false, "message": "操作失败: 错误信息"}`                   |
-
-**药品响应对象结构**：
-
-| 字段名        | 类型          | 描述                 |
-| ------------- | ------------- | -------------------- |
-| id            | Long          | 药品ID               |
-| medicineCode  | String        | 药品编码             |
-| name          | String        | 药品名称             |
-| genericName   | String        | 通用名称             |
-| category      | object        | 分类信息             |
-| specification | String        | 药品规格             |
-| unit          | String        | 单位                 |
-| manufacturer  | String        | 生产厂家             |
-| retailPrice   | BigDecimal    | 零售价               |
-| purchasePrice | BigDecimal    | 采购价               |
-| status        | Integer       | 状态：0-停用，1-启用 |
-| createTime    | LocalDateTime | 创建时间             |
-
-**分类信息结构**：
-
-| 字段名 | 类型   | 描述     |
-| ------ | ------ | -------- |
-| id     | Long   | 分类ID   |
-| name   | String | 分类名称 |
-
-
-### 3. 类：PurchaseOrderController（采购订单控制器）
-
-**位置**：`com.example.demo.controller`
-
-**类注解说明**：
-- `@RestController`：Spring注解，标识为REST风格的控制器
-- `@RequestMapping("/purchase-orders")`：设置请求路径前缀
-- `@CrossOrigin(origins = "*")`：允许跨域请求
-
-**方法列表**：
-
-| 方法签名                                                                                           | HTTP方法 | API路径                                                    | 参数                                                                     | 描述                             | 返回值说明                                                                                                 | 失败情况返回值                                                  |
-| -------------------------------------------------------------------------------------------------- | -------- | ---------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| `test()`                                                                                           | GET      | /api/purchase-orders/test                                  | 无                                                                       | 测试接口                         | `{"success": true, "message": "PurchaseOrderController is working!"}`                                      | 无                                                              |
-| `getAllPurchaseOrders(int page, int size, String sortBy, String direction)`                        | GET      | /api/purchase-orders                                       | page: 页码<br>size: 每页大小<br>sortBy: 排序字段<br>direction: 排序方向  | 获取所有采购订单（分页）         | `{"success": true, "currentPage": 页码, "totalItems": 总记录数, "totalPages": 总页数, "data": [订单列表]}` | `{"success": false, "message": "获取采购订单失败: 错误信息"}`   |
-| `getPurchaseOrderById(Long id)`                                                                    | GET      | /api/purchase-orders/{id}                                  | id: 订单ID                                                               | 根据ID获取采购订单               | `{"success": true, "data": {订单详情}}`                                                                    | `{"success": false, "message": "采购订单不存在"}`               |
-| `getPurchaseOrderByOrderNo(String orderNo)`                                                        | GET      | /api/purchase-orders/orderNo/{orderNo}                     | orderNo: 订单号                                                          | 根据订单号获取采购订单           | `{"success": true, "data": {订单详情}}`                                                                    | `{"success": false, "message": "采购订单不存在"}`               |
-| `createPurchaseOrder(PurchaseOrder order, Long operatorId)`                                        | POST     | /api/purchase-orders                                       | order: 订单对象<br>operatorId: 操作员ID                                  | 创建新采购订单                   | `{"success": true, "message": "采购订单创建成功", "data": {订单详情}}`                                     | `{"success": false, "message": "订单号已存在"}`                 |
-| `updatePurchaseOrder(Long id, PurchaseOrder order)`                                                | PUT      | /api/purchase-orders/{id}                                  | id: 订单ID<br>order: 订单对象                                            | 更新采购订单信息                 | `{"success": true, "message": "采购订单更新成功", "data": {订单详情}}`                                     | `{"success": false, "message": "采购订单不存在"}`               |
-| `deletePurchaseOrder(Long id)`                                                                     | DELETE   | /api/purchase-orders/{id}                                  | id: 订单ID                                                               | 删除采购订单                     | `{"success": true, "message": "采购订单删除成功"}`                                                         | `{"success": false, "message": "已到货的订单不能删除"}`         |
-| `getPurchaseOrdersByStatus(Integer status, int page, int size)`                                    | GET      | /api/purchase-orders/status/{status}                       | status: 订单状态<br>page: 页码<br>size: 每页大小                         | 根据订单状态分页查询采购订单     | `{"success": true, "data": {分页数据}}`                                                                    | `{"success": false, "message": "订单状态值无效，应为0-3"}`      |
-| `getPurchaseOrdersByMedicineId(Long medicineId, int page, int size)`                               | GET      | /api/purchase-orders/medicine/{medicineId}                 | medicineId: 药品ID<br>page: 页码<br>size: 每页大小                       | 根据药品ID分页查询采购订单       | `{"success": true, "data": {分页数据}}`                                                                    | `{"success": false, "message": "获取采购订单失败: 错误信息"}`   |
-| `getPendingOrders(int page, int size)`                                                             | GET      | /api/purchase-orders/pending                               | page: 页码<br>size: 每页大小                                             | 获取待处理的采购订单             | `{"success": true, "data": {分页数据}}`                                                                    | `{"success": false, "message": "获取待处理订单失败: 错误信息"}` |
-| `getOverdueOrders(int page, int size)`                                                             | GET      | /api/purchase-orders/overdue                               | page: 页码<br>size: 每页大小                                             | 获取过期的采购订单               | `{"success": true, "data": {分页数据}}`                                                                    | `{"success": false, "message": "获取过期订单失败: 错误信息"}`   |
-| `getTotalPurchasedQuantity(Long medicineId)`                                                       | GET      | /api/purchase-orders/medicine/{medicineId}/total-purchased | medicineId: 药品ID                                                       | 获取某个药品的已到货采购总量     | `{"success": true, "data": {medicineId: 药品ID, totalPurchasedQuantity: 采购总量}}`                        | `{"success": false, "message": "获取采购总量失败: 错误信息"}`   |
-| `getTotalPurchaseAmountByPeriod(LocalDateTime startTime, LocalDateTime endTime)`                   | GET      | /api/purchase-orders/total-amount                          | startTime: 开始时间<br>endTime: 结束时间                                 | 获取时间段内的已到货采购总额     | `{"success": true, "data": {startTime: 开始时间, endTime: 结束时间, totalAmount: 采购总额}}`               | `{"success": false, "message": "获取采购总额失败: 错误信息"}`   |
-| `confirmOrder(Long id)`                                                                            | PUT      | /api/purchase-orders/{id}/confirm                          | id: 订单ID                                                               | 确认采购订单                     | `{"success": true, "message": "采购订单确认成功", "data": {订单详情}}`                                     | `{"success": false, "message": "确认失败: 错误信息"}`           |
-| `markAsArrived(Long id)`                                                                           | PUT      | /api/purchase-orders/{id}/arrive                           | id: 订单ID                                                               | 标记采购订单为已到货             | `{"success": true, "message": "采购订单已标记为已到货", "data": {订单详情}}`                               | `{"success": false, "message": "标记失败: 错误信息"}`           |
-| `cancelOrder(Long id)`                                                                             | PUT      | /api/purchase-orders/{id}/cancel                           | id: 订单ID                                                               | 取消采购订单                     | `{"success": true, "message": "采购订单已取消", "data": {订单详情}}`                                       | `{"success": false, "message": "取消失败: 错误信息"}`           |
-| `getOrderStatistics()`                                                                             | GET      | /api/purchase-orders/statistics                            | 无                                                                       | 获取采购订单统计信息             | `{"success": true, "data": {统计信息}}`                                                                    | 无                                                              |
-| `deletePurchaseOrders(List<Long> ids)`                                                             | DELETE   | /api/purchase-orders/batch                                 | ids: 订单ID列表                                                          | 批量删除采购订单                 | `{"success": true, "message": "批量删除成功，共删除 N 个采购订单"}`                                        | `{"success": false, "message": "ID为 X 的采购订单不存在"}`      |
-| `createPurchaseOrders(List<PurchaseOrder> orders, Long operatorId)`                                | POST     | /api/purchase-orders/batch                                 | orders: 订单列表<br>operatorId: 操作员ID                                 | 批量保存采购订单                 | `{"success": true, "message": "批量创建成功，共创建 N 个采购订单", "data": [订单列表]}`                    | `{"success": false, "message": "订单号 'X' 已存在"}`            |
-| `searchPurchaseOrders(String keyword, int page, int size)`                                         | GET      | /api/purchase-orders/search                                | keyword: 关键词<br>page: 页码<br>size: 每页大小                          | 搜索采购订单（供应商、订单号等） | `{"success": true, "message": "已找到符合条件的采购订单", "data": {分页数据}}`                             | `{"success": false, "message": "关键词不能为空"}`               |
-| `getPurchaseOrdersByTimeRange(LocalDateTime startTime, LocalDateTime endTime, int page, int size)` | GET      | /api/purchase-orders/time-range                            | startTime: 开始时间<br>endTime: 结束时间<br>page: 页码<br>size: 每页大小 | 根据时间段查询采购订单           | `{"success": true, "message": "已找到符合条件的采购订单", "data": {分页数据}}`                             | `{"success": false, "message": "开始时间不能晚于结束时间"}`     |
-
-**采购订单响应对象结构**：
-
-| 字段名          | 类型          | 描述                                             |
-| --------------- | ------------- | ------------------------------------------------ |
-| id              | Long          | 订单ID                                           |
-| orderNo         | String        | 订单号                                           |
-| medicine        | object        | 药品信息                                         |
-| quantity        | Integer       | 采购数量                                         |
-| unitPrice       | BigDecimal    | 采购单价                                         |
-| totalAmount     | BigDecimal    | 总金额                                           |
-| supplier        | String        | 供应商                                           |
-| orderStatus     | Integer       | 订单状态：0-待处理，1-已确认，2-已到货，3-已取消 |
-| orderTime       | LocalDateTime | 下单时间                                         |
-| expectedArrival | LocalDate     | 预计到货日期                                     |
-| actualArrival   | LocalDateTime | 实际到货时间                                     |
-| operator        | object        | 操作员信息                                       |
-| remark          | String        | 备注                                             |
-| orderStatusText | String        | 订单状态文本描述                                 |
-| isOverdue       | boolean       | 是否过期                                         |
-
-**药品信息结构**：
-
-| 字段名        | 类型   | 描述     |
-| ------------- | ------ | -------- |
-| id            | Long   | 药品ID   |
-| medicineCode  | String | 药品编码 |
-| name          | String | 药品名称 |
-| specification | String | 药品规格 |
-| unit          | String | 单位     |
-
-**操作员信息结构**：
-
-| 字段名   | 类型   | 描述     |
-| -------- | ------ | -------- |
-| id       | Long   | 操作员ID |
-| username | String | 用户名   |
-| realName | String | 真实姓名 |
-
-
-### 4. 类：SaleRecordController（销售记录控制器）
-
-**位置**：`com.example.demo.controller`
-
-**类注解说明**：
-- `@RestController`：Spring注解，标识为REST风格的控制器
-- `@RequestMapping("/sale-records")`：设置请求路径前缀
-- `@CrossOrigin(origins = "*")`：允许跨域请求
-
-**方法列表**：
-
-| 方法签名                                                                                        | HTTP方法 | API路径                                                | 参数                                                                     | 描述                     | 返回值说明                                                                                                     | 失败情况返回值                                                    |
-| ----------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------ | ------------------------------------------------------------------------ | ------------------------ | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `test()`                                                                                        | GET      | /api/sale-records/test                                 | 无                                                                       | 测试接口                 | `"SaleRecordController is working!"`                                                                           | 无                                                                |
-| `getAllSaleRecords(int page, int size, String sortBy, String direction)`                        | GET      | /api/sale-records                                      | page: 页码<br>size: 每页大小<br>sortBy: 排序字段<br>direction: 排序方向  | 获取所有销售记录（分页） | `{"success": true, "currentPage": 页码, "totalItems": 总记录数, "totalPages": 总页数, "data": [销售记录列表]}` | `{"success": false, "message": "获取销售记录失败: 错误信息"}`     |
-| `getSaleRecordById(Long id)`                                                                    | GET      | /api/sale-records/{id}                                 | id: 销售记录ID                                                           | 根据ID获取销售记录       | `{"success": true, "data": {销售记录详情}}`                                                                    | `{"success": false, "message": "销售记录不存在"}`                 |
-| `getSaleRecordByRecordNo(String recordNo)`                                                      | GET      | /api/sale-records/record-no/{recordNo}                 | recordNo: 销售单号                                                       | 根据销售单号获取销售记录 | `{"success": true, "data": {销售记录详情}}`                                                                    | `{"success": false, "message": "销售记录不存在"}`                 |
-| `createSaleRecord(SaleRecord saleRecord)`                                                       | POST     | /api/sale-records                                      | saleRecord: 销售记录对象                                                 | 创建销售记录             | `{"success": true, "message": "销售记录创建成功", "data": {销售记录详情}}`                                     | `{"success": false, "message": "创建销售记录失败: 错误信息"}`     |
-| `updateSaleRecord(Long id, SaleRecord saleRecord)`                                              | PUT      | /api/sale-records/{id}                                 | id: 销售记录ID<br>saleRecord: 销售记录对象                               | 更新销售记录             | `{"success": true, "message": "销售记录更新成功", "data": {销售记录详情}}`                                     | `{"success": false, "message": "销售记录不存在"}`                 |
-| `deleteSaleRecord(Long id)`                                                                     | DELETE   | /api/sale-records/{id}                                 | id: 销售记录ID                                                           | 删除销售记录             | `{"success": true, "message": "销售记录删除成功"}`                                                             | `{"success": false, "message": "销售记录不存在"}`                 |
-| `getSaleRecordsByTimeRange(LocalDateTime startTime, LocalDateTime endTime, int page, int size)` | GET      | /api/sale-records/time-range                           | startTime: 开始时间<br>endTime: 结束时间<br>page: 页码<br>size: 每页大小 | 根据时间段查询销售记录   | `{"success": true, "currentPage": 页码, "totalItems": 总记录数, "totalPages": 总页数, "data": [销售记录列表]}` | `{"success": false, "message": "获取销售记录失败: 错误信息"}`     |
-| `getSaleRecordsByMedicineId(Long medicineId, int page, int size)`                               | GET      | /api/sale-records/medicine/{medicineId}                | medicineId: 药品ID<br>page: 页码<br>size: 每页大小                       | 根据药品ID查询销售记录   | `{"success": true, "currentPage": 页码, "totalItems": 总记录数, "totalPages": 总页数, "data": [销售记录列表]}` | `{"success": false, "message": "获取销售记录失败: 错误信息"}`     |
-| `getSaleRecordsByOperatorId(Long operatorId, int page, int size)`                               | GET      | /api/sale-records/operator/{operatorId}                | operatorId: 操作员ID<br>page: 页码<br>size: 每页大小                     | 根据操作员ID查询销售记录 | `{"success": true, "currentPage": 页码, "totalItems": 总记录数, "totalPages": 总页数, "data": [销售记录列表]}` | `{"success": false, "message": "获取销售记录失败: 错误信息"}`     |
-| `getSaleStatistics(LocalDateTime startTime, LocalDateTime endTime)`                             | GET      | /api/sale-records/statistics                           | startTime: 开始时间<br>endTime: 结束时间                                 | 获取销售统计信息         | `{"success": true, "data": {统计信息}}`                                                                        | `{"success": false, "message": "获取销售统计信息失败: 错误信息"}` |
-| `getTopSellingMedicines(int limit, LocalDateTime startDate, LocalDateTime endDate)`             | GET      | /api/sale-records/top-selling                          | limit: 限制数量<br>startDate: 开始日期<br>endDate: 结束日期              | 获取最畅销药品           | `{"success": true, "period": {start: 开始日期, end: 结束日期}, "data": [畅销药品列表]}`                        | `{"success": false, "message": "获取畅销药品失败: 错误信息"}`     |
-| `getTotalQuantityByMedicineId(Long medicineId)`                                                 | GET      | /api/sale-records/medicine/{medicineId}/total-quantity | medicineId: 药品ID                                                       | 获取某个药品的销售总量   | `{"success": true, "medicineId": 药品ID, "totalQuantity": 销售总量}`                                           | `{"success": false, "message": "获取药品销售总量失败: 错误信息"}` |
-
-**销售记录响应对象结构**：
-
-| 字段名       | 类型          | 描述             |
-| ------------ | ------------- | ---------------- |
-| id           | Long          | 销售记录ID       |
-| recordNo     | String        | 销售单号         |
-| medicine     | object        | 药品信息         |
-| quantity     | Integer       | 销售数量         |
-| unitPrice    | BigDecimal    | 销售单价         |
-| totalAmount  | BigDecimal    | 总金额           |
-| customerInfo | String        | 顾客信息         |
-| customerType | Integer       | 顾客类型         |
-| isRx         | boolean       | 是否为处方药销售 |
-| saleTime     | LocalDateTime | 销售时间         |
-| symptoms     | array         | 症状信息列表     |
-| operator     | object        | 操作员信息       |
-| remark       | String        | 备注             |
-
-**症状信息结构**：
-
-| 字段名 | 类型    | 描述     |
-| ------ | ------- | -------- |
-| id     | Integer | 症状ID   |
-| name   | String  | 症状名称 |
-
-
-### 5. 类：StockController（库存控制器）
-
-**位置**：`com.example.demo.controller`
-
-**类注解说明**：
-- `@RestController`：Spring注解，标识为REST风格的控制器
-- `@RequestMapping("/stocks")`：设置请求路径前缀
-- `@CrossOrigin(origins = "*")`：允许跨域请求
-
-**方法列表**：
-
-| 方法签名                                                                                         | HTTP方法 | API路径                                 | 参数                                                                                    | 描述                       | 返回值说明                                                                                                                                                           | 失败情况返回值                                                |
-| ------------------------------------------------------------------------------------------------ | -------- | --------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `test()`                                                                                         | GET      | /api/stocks/test                        | 无                                                                                      | 测试接口                   | `{"success": true, "message": "StockController is working!"}`                                                                                                        | `{"success": false, "message": "操作失败: 错误信息"}`         |
-| `getAllStocks(int page, int size, String sortBy, String direction)`                              | GET      | /api/stocks                             | page: 页码<br>size: 每页大小<br>sortBy: 排序字段<br>direction: 排序方向                 | 获取所有库存（分页）       | `{"success": true, "currentPage": 页码, "totalItems": 总记录数, "totalPages": 总页数, "data": [库存列表]}`                                                           | `{"success": false, "message": "操作失败: 错误信息"}`         |
-| `getStockById(Long id)`                                                                          | GET      | /api/stocks/{id}                        | id: 库存记录ID                                                                          | 根据ID获取库存             | `{"success": true, "data": {库存详情}}`                                                                                                                              | `{"success": false, "message": "库存记录不存在"}`             |
-| `createStock(Stock stock)`                                                                       | POST     | /api/stocks                             | stock: 库存对象                                                                         | 创建新库存                 | `{"success": true, "message": "库存创建成功", "data": {库存详情}}`                                                                                                   | `{"success": false, "message": "创建失败: 错误信息"}`         |
-| `updateStock(Long id, Stock stock)`                                                              | PUT      | /api/stocks/{id}                        | id: 库存记录ID<br>stock: 库存对象                                                       | 更新库存信息               | `{"success": true, "message": "库存更新成功", "data": {库存详情}}`                                                                                                   | `{"success": false, "message": "库存记录不存在"}`             |
-| `deleteStock(Long id)`                                                                           | DELETE   | /api/stocks/{id}                        | id: 库存记录ID                                                                          | 删除库存                   | `{"success": true, "message": "库存删除成功"}`                                                                                                                       | `{"success": false, "message": "库存记录不存在"}`             |
-| `getStocksByMedicine(Long medicineId, int page, int size)`                                       | GET      | /api/stocks/medicine/{medicineId}       | medicineId: 药品ID<br>page: 页码<br>size: 每页大小                                      | 根据药品ID查找库存         | `{"success": true, "data": {分页数据}}`                                                                                                                              | `{"success": false, "message": "操作失败: 错误信息"}`         |
-| `getTotalStockByMedicine(Long medicineId)`                                                       | GET      | /api/stocks/medicine/{medicineId}/total | medicineId: 药品ID                                                                      | 获取某个药品的总库存量     | `{"success": true, "data": {medicineId: 药品ID, totalStock: 总库存量}}`                                                                                              | `{"success": false, "message": "操作失败: 错误信息"}`         |
-| `getExpiringStock(LocalDate startDate, LocalDate endDate, int page, int size)`                   | GET      | /api/stocks/expiring                    | startDate: 开始日期<br>endDate: 结束日期<br>page: 页码<br>size: 每页大小                | 获取即将过期的库存         | `{"success": true, "message": "查询成功", "data": {分页数据}}`                                                                                                       | `{"success": false, "message": "操作失败: 错误信息"}`         |
-| `getLowStock(int page, int size)`                                                                | GET      | /api/stocks/low-stock                   | page: 页码<br>size: 每页大小                                                            | 获取库存不足的药品         | `{"success": true, "message": "查询成功", "data": {分页数据}}`                                                                                                       | `{"success": false, "message": "操作失败: 错误信息"}`         |
-| `getLowStockSummary()`                                                                           | GET      | /api/stocks/low-stock-summary           | 无                                                                                      | 获取库存不足药品的汇总信息 | `{"success": true, "data": {药品ID: 库存量}}`                                                                                                                        | `{"success": false, "message": "操作失败: 错误信息"}`         |
-| `reduceStock(Long medicineId, Integer quantity)`                                                 | PUT      | /api/stocks/reduce                      | medicineId: 药品ID<br>quantity: 减少数量                                                | 减少库存（销售出库）       | `{"success": true, "message": "库存减少成功", "data": {medicineId: 药品ID, reducedQuantity: 减少数量, remainingStock: 剩余库存}}`                                    | `{"success": false, "message": "库存不足，无法减少"}`         |
-| `increaseStock(Long medicineId, Integer quantity, String batchNumber, LocalDate expirationDate)` | PUT      | /api/stocks/increase                    | medicineId: 药品ID<br>quantity: 增加数量<br>batchNumber: 批号<br>expirationDate: 有效期 | 增加库存（采购入库）       | `{"success": true, "message": "库存增加成功", "data": {medicineId: 药品ID, addedQuantity: 增加数量, batchNumber: 批号, expirationDate: 有效期, totalStock: 总库存}}` | `{"success": false, "message": "库存增加失败: 错误信息"}`     |
-| `checkStockAvailability(Long medicineId, Integer requiredQuantity)`                              | GET      | /api/stocks/check-availability          | medicineId: 药品ID<br>requiredQuantity: 需求数量                                        | 检查库存是否足够           | `{"success": true, "data": {medicineId: 药品ID, requiredQuantity: 需求数量, currentStock: 当前库存, isAvailable: 是否足够, message: 提示信息}}`                      | `{"success": false, "message": "操作失败: 错误信息"}`         |
-| `getStockByBatchNumber(String batchNumber, int page, int size)`                                  | GET      | /api/stocks/batch/{batchNumber}         | batchNumber: 批号<br>page: 页码<br>size: 每页大小                                       | 根据批号查找库存           | `{"success": true, "message": "查找成功", "data": {分页数据}}`                                                                                                       | `{"success": false, "message": "批号不能为空"}`               |
-| `getExpiredStock(int page, int size)`                                                            | GET      | /api/stocks/expired                     | page: 页码<br>size: 每页大小                                                            | 获取过期库存               | `{"success": true, "message": "查询成功", "data": {分页数据}}`                                                                                                       | `{"success": false, "message": "操作失败: 错误信息"}`         |
-| `deleteStocks(List<Long> ids)`                                                                   | DELETE   | /api/stocks/batch                       | ids: 库存记录ID列表                                                                     | 批量删除库存               | `{"success": true, "message": "批量删除成功，共删除 N 个库存记录"}`                                                                                                  | `{"success": false, "message": "ID为 X 的库存记录不存在"}`    |
-| `createStocks(List<Stock> stocks)`                                                               | POST     | /api/stocks/batch                       | stocks: 库存列表                                                                        | 批量保存库存               | `{"success": true, "message": "批量创建成功，共创建 N 个库存记录", "data": [库存列表]}`                                                                              | `{"success": false, "message": "批量保存失败: 错误信息"}`     |
-| `getStockStatistics()`                                                                           | GET      | /api/stocks/statistics                  | 无                                                                                      | 获取库存统计信息           | `{"success": true, "message": "库存统计信息获取成功", "data": {统计信息}}`                                                                                           | `{"success": false, "message": "统计信息获取失败: 错误信息"}` |
-
-**库存响应对象结构**：
-
-| 字段名               | 类型          | 描述                 |
-| -------------------- | ------------- | -------------------- |
-| id                   | Long          | 库存记录ID           |
-| medicine             | object        | 药品信息             |
-| batchNumber          | String        | 批号                 |
-| productionDate       | LocalDate     | 生产日期             |
-| expirationDate       | LocalDate     | 有效期至             |
-| quantity             | Integer       | 当前数量             |
-| warningQuantity      | Integer       | 库存预警数量         |
-| shelfLocation        | String        | 货架位置             |
-| status               | Integer       | 状态：0-过期，1-正常 |
-| minimumOrderQuantity | Integer       | 最小订购数量         |
-| leadTimeDays         | Integer       | 采购提前期（天）     |
-| reorderPoint         | Integer       | 再订货点             |
-| createTime           | LocalDateTime | 创建时间             |
-| updateTime           | LocalDateTime | 更新时间             |
-| isExpired            | boolean       | 是否过期             |
-| needsWarning         | boolean       | 是否需要预警         |
-
-
-### 6. 类：SymptomController（症状控制器）
-
-**位置**：`com.example.demo.controller`
-
-**类注解说明**：
-- `@RestController`：Spring注解，标识为REST风格的控制器
-- `@RequestMapping("/symptoms")`：设置请求路径前缀
-- `@CrossOrigin(origins = "*")`：允许跨域请求
-
-**方法列表**：
-
-| 方法签名                                                              | HTTP方法 | API路径                          | 参数                                                                    | 描述                               | 返回值说明                                                                                                 | 失败情况返回值                                         |
-| --------------------------------------------------------------------- | -------- | -------------------------------- | ----------------------------------------------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| `test()`                                                              | GET      | /api/symptoms/test               | 无                                                                      | 测试接口                           | `{"success": true, "message": "SymptomController is working!"}`                                            | `{"success": false, "message": "操作失败: 错误信息"}`  |
-| `getAllSymptoms(int page, int size, String sortBy, String direction)` | GET      | /api/symptoms                    | page: 页码<br>size: 每页大小<br>sortBy: 排序字段<br>direction: 排序方向 | 获取所有症状                       | `{"success": true, "currentPage": 页码, "totalItems": 总记录数, "totalPages": 总页数, "data": [症状列表]}` | `{"success": false, "message": "操作失败: 错误信息"}`  |
-| `getSymptomById(Integer id)`                                          | GET      | /api/symptoms/{id}               | id: 症状ID                                                              | 根据ID获取症状                     | `{"success": true, "data": {症状详情}}`                                                                    | `{"success": false, "message": "症状不存在"}`          |
-| `createSymptom(Symptom symptom)`                                      | POST     | /api/symptoms                    | symptom: 症状对象                                                       | 创建新症状                         | `{"success": true, "message": "症状创建成功", "data": {症状详情}}`                                         | `{"success": false, "message": "症状名称已存在"}`      |
-| `updateSymptom(Integer id, Symptom symptom)`                          | PUT      | /api/symptoms/{id}               | id: 症状ID<br>symptom: 症状对象                                         | 更新症状信息                       | `{"success": true, "message": "症状更新成功", "data": {症状详情}}`                                         | `{"success": false, "message": "症状不存在"}`          |
-| `deleteSymptom(Integer id)`                                           | DELETE   | /api/symptoms/{id}               | id: 症状ID                                                              | 删除症状                           | `{"success": true, "message": "症状删除成功"}`                                                             | `{"success": false, "message": "症状不存在"}`          |
-| `getSymptomByName(String name)`                                       | GET      | /api/symptoms/name/{name}        | name: 症状名称                                                          | 根据症状名称精确查找               | `{"success": true, "data": {症状详情}}`                                                                    | `{"success": false, "message": "症状不存在"}`          |
-| `searchSymptomsByName(String keyword)`                                | GET      | /api/symptoms/search/name        | keyword: 关键词                                                         | 根据症状名称模糊查询               | `{"success": true, "data": [症状列表]}`                                                                    | `{"success": false, "message": "操作失败: 错误信息"}`  |
-| `searchSymptomsByDescription(String keyword)`                         | GET      | /api/symptoms/search/description | keyword: 关键词                                                         | 根据描述模糊查询症状               | `{"success": true, "data": [症状列表]}`                                                                    | `{"success": false, "message": "操作失败: 错误信息"}`  |
-| `searchSymptoms(String keyword, int page, int size)`                  | GET      | /api/symptoms/search             | keyword: 关键词<br>page: 页码<br>size: 每页大小                         | 根据关键词搜索症状（名称或描述）   | `{"success": true, "message": "搜索成功", "data": {分页数据}}`                                             | `{"success": false, "message": "关键词不能为空"}`      |
-| `checkSymptomNameExists(String name)`                                 | GET      | /api/symptoms/check-name/{name}  | name: 症状名称                                                          | 检查症状名称是否存在               | `{"success": true, "exists": true/false}`                                                                  | `{"success": false, "message": "操作失败: 错误信息"}`  |
-| `deleteSymptoms(List<Integer> ids)`                                   | DELETE   | /api/symptoms/batch              | ids: 症状ID列表                                                         | 批量删除症状                       | `{"success": true, "message": "批量删除成功，共删除 N 个症状"}`                                            | `{"success": false, "message": "ID为 X 的症状不存在"}` |
-| `createSymptoms(List<Symptom> symptoms)`                              | POST     | /api/symptoms/batch              | symptoms: 症状列表                                                      | 批量保存症状                       | `{"success": true, "message": "批量创建成功，共创建 N 个症状", "data": [症状列表]}`                        | `{"success": false, "message": "症状名称 'X' 已存在"}` |
-| `checkSymptomExists(Integer id)`                                      | GET      | /api/symptoms/{id}/exists        | id: 症状ID                                                              | 检查症状是否存在                   | `{"success": true, "exists": true/false}`                                                                  | `{"success": false, "message": "操作失败: 错误信息"}`  |
-| `getSymptomStatistics()`                                              | GET      | /api/symptoms/statistics         | 无                                                                      | 获取症状统计信息                   | `{"success": true, "data": {统计信息}}`                                                                    | `{"success": false, "message": "操作失败: 错误信息"}`  |
-| `getSimpleSymptomList()`                                              | GET      | /api/symptoms/simple             | 无                                                                      | 获取症状简要列表（仅包含ID和名称） | `{"success": true, "data": [症状简要列表]}`                                                                | `{"success": false, "message": "操作失败: 错误信息"}`  |
-| `getSymptomsByIds(List<Integer> ids)`                                 | POST     | /api/symptoms/by-ids             | ids: 症状ID列表                                                         | 根据ID列表获取症状                 | `{"success": true, "data": [症状列表]}`                                                                    | `{"success": false, "message": "操作失败: 错误信息"}`  |
-| `autocompleteSymptoms(String query, int limit)`                       | GET      | /api/symptoms/autocomplete       | query: 查询关键词<br>limit: 限制数量                                    | 快速搜索症状（用于自动完成）       | `{"success": true, "data": [症状列表]}`                                                                    | `{"success": false, "message": "操作失败: 错误信息"}`  |
-
-**症状响应对象结构**：
-
-| 字段名      | 类型    | 描述     |
-| ----------- | ------- | -------- |
-| id          | Integer | 症状ID   |
-| name        | String  | 症状名称 |
-| description | String  | 症状描述 |
-
-
-### 7. 类：TestController（测试控制器）
-
-**位置**：`com.example.demo.controller`
-
-**类注解说明**：
-- `@RestController`：Spring注解，标识为REST风格的控制器
-- `@RequestMapping("/test")`：设置请求路径前缀
-
-**方法列表**：
-
-| 方法签名           | HTTP方法 | API路径          | 参数 | 描述             | 返回值说明                                     | 失败情况返回值 |
-| ------------------ | -------- | ---------------- | ---- | ---------------- | ---------------------------------------------- | -------------- |
-| `createTestUser()` | POST     | /api/test/user   | 无   | 创建测试用户     | `{用户对象}`                                   | 无             |
-| `getAllUsers()`    | GET      | /api/test/users  | 无   | 获取所有用户     | `[用户列表]`                                   | 无             |
-| `checkTables()`    | GET      | /api/test/tables | 无   | 检查数据库表结构 | `"✅ 实体类创建成功！请检查数据库中的表结构。"` | 无             |
-
-
-### 8. 类：UserController（用户控制器）
-
-**位置**：`com.example.demo.controller`
-
-**类注解说明**：
-- `@RestController`：Spring注解，标识为REST风格的控制器
-- `@RequestMapping("/users")`：设置请求路径前缀
-- `@CrossOrigin(origins = "*")`：允许跨域请求
-
-**方法列表**：
-
-| 方法签名                                                           | HTTP方法 | API路径                              | 参数                                                                    | 描述                         | 返回值说明                                                                                                 | 失败情况返回值                                        |
-| ------------------------------------------------------------------ | -------- | ------------------------------------ | ----------------------------------------------------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `test()`                                                           | GET      | /api/users/test                      | 无                                                                      | 测试接口                     | `"UserController is working!"`                                                                             | `"操作失败: 错误信息"`                                |
-| `login(Map<String, String> loginRequest)`                          | POST     | /api/users/login                     | loginRequest: 登录请求对象                                              | 用户登录                     | `{"success": true, "message": "登录成功", "user": {用户信息}}`                                             | `{"success": false, "message": "用户名或密码错误"}`   |
-| `getAllUsers(int page, int size, String sortBy, String direction)` | GET      | /api/users                           | page: 页码<br>size: 每页大小<br>sortBy: 排序字段<br>direction: 排序方向 | 获取所有用户（分页）         | `{"success": true, "currentPage": 页码, "totalItems": 总记录数, "totalPages": 总页数, "data": [用户列表]}` | `{"success": false, "message": "操作失败: 错误信息"}` |
-| `getUserById(Long id)`                                             | GET      | /api/users/{id}                      | id: 用户ID                                                              | 根据ID获取用户               | `{"success": true, "data": {用户详情}}`                                                                    | `{"success": false, "message": "用户不存在"}`         |
-| `getUserByUsername(String username)`                               | GET      | /api/users/username/{username}       | username: 用户名                                                        | 根据用户名获取用户           | `{"success": true, "data": {用户详情}}`                                                                    | `{"success": false, "message": "用户不存在"}`         |
-| `createUser(User user)`                                            | POST     | /api/users                           | user: 用户对象                                                          | 创建新用户                   | `{"success": true, "message": "用户创建成功", "data": {用户详情}}`                                         | `{"success": false, "message": "用户名已存在"}`       |
-| `updateUser(Long id, User user)`                                   | PUT      | /api/users/{id}                      | id: 用户ID<br>user: 用户对象                                            | 更新用户信息                 | `{"success": true, "message": "用户更新成功", "data": {用户详情}}`                                         | `{"success": false, "message": "用户不存在"}`         |
-| `deleteUser(Long id)`                                              | DELETE   | /api/users/{id}                      | id: 用户ID                                                              | 删除用户                     | `{"success": true, "message": "用户删除成功"}`                                                             | `{"success": false, "message": "用户不存在"}`         |
-| `changeUserStatus(Long id, Integer status)`                        | PUT      | /api/users/{id}/status               | id: 用户ID<br>status: 状态                                              | 修改用户状态                 | `{"success": true, "message": "用户状态更新成功", "data": {用户详情}}`                                     | `{"success": false, "message": "用户不存在"}`         |
-| `getUsersByRole(String role)`                                      | GET      | /api/users/role/{role}               | role: 用户角色                                                          | 根据角色获取用户             | `{"success": true, "data": [用户列表]}`                                                                    | `{"success": false, "message": "操作失败: 错误信息"}` |
-| `searchUsers(String keyword, int page, int size)`                  | GET      | /api/users/search                    | keyword: 关键词<br>page: 页码<br>size: 每页大小                         | 用户名或真实名字模糊搜索用户 | `{"success": true, "message": "搜索成功", "data": {分页数据}}`                                             | `{"success": false, "message": "关键词不能为空"}`     |
-| `checkUsernameExists(String username)`                             | GET      | /api/users/check-username/{username} | username: 用户名                                                        | 检查用户名是否存在           | `{"success": true, "exists": true/false}`                                                                  | `{"success": false, "message": "操作失败: 错误信息"}` |
-| `getUserStatistics()`                                              | GET      | /api/users/statistics                | 无                                                                      | 获取用户统计信息             | `{"success": true, "data": {统计信息}}`                                                                    | `{"success": false, "message": "操作失败: 错误信息"}` |
-| `updatePassword(Long id, Map<String, String> passwordRequest)`     | PUT      | /api/users/{id}/password             | id: 用户ID<br>passwordRequest: 密码更新请求                             | 更新用户密码                 | `{"success": true, "message": "密码更新成功"}`                                                             | `{"success": false, "message": "旧密码不正确"}`       |
-
-**用户响应对象结构**：
-
-| 字段名     | 类型          | 描述                               |
-| ---------- | ------------- | ---------------------------------- |
-| id         | Long          | 用户ID                             |
-| username   | String        | 用户名                             |
-| realName   | String        | 真实姓名                           |
-| phone      | String        | 手机号                             |
-| email      | String        | 邮箱                               |
-| role       | String        | 角色：ADMIN, PHARMACIST, PURCHASER |
-| status     | Integer       | 状态：0-禁用，1-正常               |
-| createTime | LocalDateTime | 创建时间                           |
-| updateTime | LocalDateTime | 更新时间                           |
-
-
-### 控制器层返回体结构统一说明
-
-所有控制器的返回体均采用统一的Map<String, Object>结构，包含以下字段：
-
-| 字段名      | 类型         | 描述                 | 必需 |
-| ----------- | ------------ | -------------------- | ---- |
-| success     | boolean      | 操作是否成功         | 是   |
-| message     | string       | 操作结果消息         | 否   |
-| data        | object/array | 响应数据             | 否   |
-| currentPage | number       | 当前页码（分页接口） | 否   |
-| totalItems  | number       | 总记录数（分页接口） | 否   |
-| totalPages  | number       | 总页数（分页接口）   | 否   |
-| exists      | boolean      | 检查存在性接口的结果 | 否   |
-
-**分页数据结构**：
-
-| 字段名      | 类型    | 描述           |
-| ----------- | ------- | -------------- |
-| content     | array   | 当前页数据列表 |
-| currentPage | number  | 当前页码       |
-| pageSize    | number  | 每页大小       |
-| totalItems  | number  | 总记录数       |
-| totalPages  | number  | 总页数         |
-| isFirst     | boolean | 是否第一页     |
-| isLast      | boolean | 是否最后一页   |
-
-**失败情况返回结构**：
-
-| 字段名  | 类型         | 描述           |
-| ------- | ------------ | -------------- |
-| success | boolean      | false          |
-| message | string       | 错误信息       |
-| data    | object/array | 可能的错误数据 |
-
-### 控制器层注解说明
-
-| 注解            | 说明                                 | 示例                                                |
-| --------------- | ------------------------------------ | --------------------------------------------------- |
-| @RestController | 标识为REST风格的控制器，返回JSON数据 | @RestController                                     |
-| @RequestMapping | 设置请求路径前缀                     | @RequestMapping("/categories")                      |
-| @CrossOrigin    | 允许跨域请求                         | @CrossOrigin(origins = "*")                         |
-| @GetMapping     | 处理GET请求                          | @GetMapping("/test")                                |
-| @PostMapping    | 处理POST请求                         | @PostMapping                                        |
-| @PutMapping     | 处理PUT请求                          | @PutMapping("/{id}")                                |
-| @DeleteMapping  | 处理DELETE请求                       | @DeleteMapping("/{id}")                             |
-| @PathVariable   | 获取路径参数                         | @PathVariable Long id                               |
-| @RequestParam   | 获取查询参数                         | @RequestParam(defaultValue = "0") int page          |
-| @RequestBody    | 获取请求体数据                       | @RequestBody Category category                      |
-| @DateTimeFormat | 日期时间格式化                       | @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) |
-
-### 状态码说明
-
-| 状态码                    | 含义           | 示例               |
-| ------------------------- | -------------- | ------------------ |
-| 200 OK                    | 请求成功       | 获取数据、更新成功 |
-| 201 Created               | 创建成功       | 创建新资源         |
-| 400 Bad Request           | 请求参数错误   | 参数格式不正确     |
-| 404 Not Found             | 资源不存在     | 找不到指定ID的资源 |
-| 409 Conflict              | 资源冲突       | 名称已存在         |
-| 401 Unauthorized          | 未授权         | 登录失败           |
-| 500 Internal Server Error | 服务器内部错误 | 处理过程异常       |
-
-
-
-## 配置层 (Config Layer) 文档
-### 配置类使用
-
-1. **HttpClientConfig**：
-   - 在需要发送HTTP请求的服务中注入 `RestTemplate`
-   - 在需要JSON序列化/反序列化的地方注入 `ObjectMapper`
-
-2. **PasswordEncoderConfig**：
-   - 在用户认证、注册、密码修改等场景中注入 `PasswordEncoder`
-   - 使用其 `encode()` 方法加密密码，`matches()` 方法验证密码
-
-3. **SecurityConfig**：
-   - 当前配置为开发/测试环境专用
-   - 生产环境应根据实际需求调整安全策略
-
-### 1. 类：HttpClientConfig（HTTP客户端配置）
-
-**位置**：`com.example.demo.config`
-
-**继承关系**：无
-
-**类注解说明**：
-- `@Configuration`：标识为Spring配置类
-
-**描述**：配置HTTP客户端相关的Bean，包括RestTemplate和ObjectMapper
-
-**方法列表**：
-
-| 方法签名 | 返回类型 | 参数 | 描述 | 可见性权限 | 注解/备注 |
-| -------- | -------- | ---- | ---- | ---------- | ---------- |
-| `restTemplate()` | `RestTemplate` | 无 | 创建并返回RestTemplate实例 | Public | `@Bean` 注解，注册为Spring Bean |
-| `objectMapper()` | `ObjectMapper` | 无 | 创建并返回ObjectMapper实例 | Public | `@Bean` 注解，注册为Spring Bean |
-
-**功能说明**：
-- `RestTemplate`：用于发送HTTP请求，调用外部API
-- `ObjectMapper`：用于JSON序列化和反序列化
-
----
-
-### 2. 类：PasswordEncoderConfig（密码编码器配置）
-
-**位置**：`com.example.demo.config`
-
-**继承关系**：无
-
-**类注解说明**：
-- `@Configuration`：标识为Spring配置类
-
-**描述**：配置密码编码器Bean，用于密码加密和验证
-
-**方法列表**：
-
-| 方法签名 | 返回类型 | 参数 | 描述 | 可见性权限 | 注解/备注 |
-| -------- | -------- | ---- | ---- | ---------- | ---------- |
-| `passwordEncoder()` | `PasswordEncoder` | 无 | 创建并返回BCryptPasswordEncoder实例 | Public | `@Bean` 注解，注册为Spring Bean |
-
-**功能说明**：
-- `BCryptPasswordEncoder`：使用BCrypt算法对密码进行加密和验证，提供安全的密码存储方案
-
----
-
-### 3. 类：SecurityConfig（安全配置）
-
-**位置**：`com.example.demo.config`
-
-**继承关系**：无
-
-**类注解说明**：
-- `@Configuration`：标识为Spring配置类
-- `@EnableWebSecurity`：启用Spring Security
-
-**描述**：配置Spring Security，设置请求授权规则和安全策略
-
-**方法列表**：
-
-| 方法签名 | 返回类型 | 参数 | 描述 | 可见性权限 | 注解/备注 |
-| -------- | -------- | ---- | ---- | ---------- | ---------- |
-| `filterChain(HttpSecurity http)` | `SecurityFilterChain` | `http`：HttpSecurity对象 | 配置安全过滤链 | Public | `@Bean` 注解，注册为Spring Bean |
-
-**配置详情**：
-1. **禁用CSRF**：方便测试POST/PUT/DELETE请求
-2. **允许所有请求**：无需登录即可访问所有接口
-3. **禁用登录页**：避免浏览器弹窗
-4. **禁用Basic认证**：简化测试流程
-
-**适用场景**：
-- 开发环境
-- 测试环境
-- 无需身份验证的公开API
-
----
-
-## 视图层 (Views Layer) 文档
-
-### 1. 类：Views（JSON视图定义）
-
-**位置**：`com.example.demo.views`
-
-**继承关系**：无
-
-**类注解说明**：无
-
-**描述**：定义JSON视图接口，用于控制API响应中字段的可见性
-
-**接口列表**：
-
-| 接口名 | 继承关系 | 描述 | 适用场景 |
-| ------ | -------- | ---- | -------- |
-| `Public` | 无 | 公共可访问字段 | 所有公开接口，返回基础信息 |
-| `Internal` | `extends Public` | 内部使用字段 | 内部系统接口，返回更多信息 |
-| `Detail` | `extends Internal` | 详细字段 | 需要详细信息的接口 |
-| `Admin` | `extends Detail` | 管理员字段 | 管理员接口，返回所有信息 |
-| `MLFeatures` | `extends Public` | 机器学习特征字段 | 机器学习相关接口 |
-| `Create` | `extends Public` | 创建操作字段 | 创建资源的请求和响应 |
-| `Update` | `extends Public` | 更新操作字段 | 更新资源的请求和响应 |
-
-**使用方式**：
-- 在实体类的属性上使用 `@JsonView(Views.XXX.class)` 注解
-- 在控制器方法上使用 `@JsonView(Views.XXX.class)` 注解
-- 序列化时，只有被指定视图包含的字段会被返回
-
-**继承关系图**：
-```
-Public
-├── Internal
-│   └── Detail
-│       └── Admin
-├── MLFeatures
-├── Create
-└── Update
-```
-
-**作用**：
-1. **控制响应字段**：根据不同接口需求返回不同级别的字段
-2. **保护敏感信息**：确保敏感字段只在适当的接口中返回
-3. **优化响应大小**：减少不必要字段的传输，提高API性能
-4. **统一接口风格**：建立标准化的字段可见性规则
-
-
-### 视图接口使用
-
-1. **基础原则**：
-   - 从 `Public` 开始，根据需要逐步使用更高级别的视图
-   - 敏感字段应使用 `Admin` 视图保护
-   - 详细信息使用 `Detail` 视图
-
-2. **最佳实践**：
-   - 为每个实体类的字段明确指定视图级别
-   - 为每个控制器方法指定适当的返回视图
-   - 保持视图使用的一致性和可预测性
-
-3. **常见视图级别使用场景**：
-   - `Public`：公开查询接口，如商品列表、基本信息查询
-   - `Internal`：内部系统接口，如员工管理、订单处理
-   - `Detail`：详细信息接口，如商品详情、订单详情
-   - `Admin`：管理后台接口，如用户管理、系统设置
-   - `Create/Update`：创建/更新操作的请求和响应
-   - `MLFeatures`：机器学习数据采集和分析接口
-
-
-
+   - 症状使用统计分析

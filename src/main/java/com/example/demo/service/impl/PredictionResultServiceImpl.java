@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 @Slf4j
+@Deprecated
 public class PredictionResultServiceImpl extends BaseServiceImpl<PredictionResult, Long, PredictionResultRepository>
         implements PredictionResultService {
 
@@ -72,7 +73,7 @@ public class PredictionResultServiceImpl extends BaseServiceImpl<PredictionResul
     public List<PredictionResult> findByPredictionDateRange(LocalDate startDate, LocalDate endDate) {return repository.findByPredictionDateBetween(startDate, endDate);}
 
     @Override
-    public List<PredictionResult> findNeedReprediction(Double threshold) {return repository.findNeedReprediction(threshold);}
+    public List<PredictionResult> findNeedReprediction(Double threshold) {return repository.findNeedReprediction(threshold != null ? BigDecimal.valueOf(threshold) : null);}
 
     @Override
     public Map<String, Double> getAverageAccuracyByModel() {
@@ -88,6 +89,7 @@ public class PredictionResultServiceImpl extends BaseServiceImpl<PredictionResul
     /**
      * 调用模型端API进行单个药品预测
      */
+    @Deprecated
     @Override
     public PredictionResult generatePrediction(Long medicineId, String modelType,
                                                LocalDate predictionDate) {
@@ -120,6 +122,7 @@ public class PredictionResultServiceImpl extends BaseServiceImpl<PredictionResul
     /**
      * 调用模型端批量预测API
      */
+    @Deprecated
     @Override
     public List<PredictionResult> generateBatchPredictions(List<Long> medicineIds,
                                                            String modelType,
@@ -164,6 +167,7 @@ public class PredictionResultServiceImpl extends BaseServiceImpl<PredictionResul
     /**
      * 获取推荐订购数量
      */
+    @Deprecated
     @Override
     public Map<Long, Integer> getRecommendedOrderQuantities(LocalDate targetDate) {
         log.info("获取推荐订购数量 - 目标日期: {}", targetDate);
@@ -212,6 +216,7 @@ public class PredictionResultServiceImpl extends BaseServiceImpl<PredictionResul
     /**
      * 调用模型端单个药品预测API
      */
+    @Deprecated
     private Map<String, Object> callModelPredictionApi(Long medicineId, LocalDate predictionDate) {
         String apiUrl = modelServiceBaseUrl + modelApiVersion + "/predict/single-medicine";
 
@@ -265,6 +270,7 @@ public class PredictionResultServiceImpl extends BaseServiceImpl<PredictionResul
     /**
      * 调用模型端批量预测API
      */
+    @Deprecated
     private List<Map<String, Object>> callBatchPredictionApi(List<Long> medicineIds,
                                                              LocalDate startDate,
                                                              LocalDate endDate) {
@@ -327,6 +333,7 @@ public class PredictionResultServiceImpl extends BaseServiceImpl<PredictionResul
     /**
      * 调用模型端获取历史预测记录
      */
+    @Deprecated
     private List<Map<String, Object>> getHistoricalPredictions(Long medicineId) {
         String apiUrl = modelServiceBaseUrl + modelApiVersion + "/predict/history/" + medicineId;
 
@@ -359,6 +366,7 @@ public class PredictionResultServiceImpl extends BaseServiceImpl<PredictionResul
     /**
      * 从模型端响应创建预测结果
      */
+    @Deprecated
     private PredictionResult createPredictionResultFromModelResponse(Medicine medicine,
                                                                      Map<String, Object> modelResponse,
                                                                      String modelType,
@@ -426,6 +434,7 @@ public class PredictionResultServiceImpl extends BaseServiceImpl<PredictionResul
     /**
      * 从批量响应创建预测结果
      */
+    @Deprecated
     private List<PredictionResult> createBatchPredictionsFromModelResponse(List<Long> medicineIds,
                                                                            List<Map<String, Object>> batchPredictions,
                                                                            String modelType,
@@ -497,6 +506,7 @@ public class PredictionResultServiceImpl extends BaseServiceImpl<PredictionResul
     /**
      * 本地预测算法（模型端API失败时使用）
      */
+    @Deprecated
     private PredictionResult generateLocalPrediction(Medicine medicine, String modelType, LocalDate predictionDate) {
         log.info("使用本地算法生成预测 - 药品: {}, 日期: {}", medicine.getName(), predictionDate);
 
@@ -532,6 +542,7 @@ public class PredictionResultServiceImpl extends BaseServiceImpl<PredictionResul
     /**
      * 本地批量预测算法
      */
+    @Deprecated
     private List<PredictionResult> generateLocalBatchPredictions(List<Long> medicineIds,
                                                                  String modelType,
                                                                  LocalDate startDate,
@@ -566,6 +577,7 @@ public class PredictionResultServiceImpl extends BaseServiceImpl<PredictionResul
     /**
      * 计算预测准确率
      */
+    @Deprecated
     private BigDecimal calculateAccuracyRate(Long medicineId, Integer predictedQuantity) {
         try {
             // 获取历史预测记录进行比较

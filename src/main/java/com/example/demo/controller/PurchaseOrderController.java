@@ -31,10 +31,17 @@ public class PurchaseOrderController {
 
     @GetMapping("/test")
     public ResponseEntity<Map<String, Object>> test() {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("message", "PurchaseOrderController is working!");
-        return ResponseEntity.ok(response);
+        try {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "PurchaseOrderController is working!");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     /**
@@ -598,23 +605,30 @@ public class PurchaseOrderController {
      */
     @DeleteMapping("/batch")
     public ResponseEntity<Map<String, Object>> deletePurchaseOrders(@RequestBody List<Long> ids) {
-        // 检查所有订单是否存在
-        for (Long id : ids) {
-            if (!purchaseOrderService.exists(id)) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("message", "ID为 " + id + " 的采购订单不存在");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        try {
+            // 检查所有订单是否存在
+            for (Long id : ids) {
+                if (!purchaseOrderService.exists(id)) {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", false);
+                    response.put("message", "ID为 " + id + " 的采购订单不存在");
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                }
             }
+
+            purchaseOrderService.deleteAll(ids);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "批量删除成功，共删除 " + ids.size() + " 个采购订单");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "批量删除失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-
-        purchaseOrderService.deleteAll(ids);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("message", "批量删除成功，共删除 " + ids.size() + " 个采购订单");
-
-        return ResponseEntity.ok(response);
     }
 
     /**

@@ -1,6 +1,9 @@
 package com.example.demo.repository;
 
 import com.example.demo.entity.SaleRecord;
+import com.example.demo.entity.Medicine;
+import com.example.demo.entity.User;
+import com.example.demo.entity.Symptom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -37,19 +41,18 @@ public interface SaleRecordRepository extends JpaRepository<SaleRecord, Long> {
 
     // 自定义查询：统计某个药品的销售总量 - 添加COALESCE处理null
     @Query("SELECT COALESCE(SUM(sr.quantity), 0) FROM SaleRecord sr WHERE sr.medicine.id = :medicineId")
-    Integer sumQuantityByMedicineId(@Param("medicineId") Long medicineId);
+    Long sumQuantityByMedicineId(@Param("medicineId") Long medicineId);
 
     // 统计某个时间段的销售总额 - 添加COALESCE处理null
-    @Query("SELECT COALESCE(SUM(sr.totalAmount), 0.0) FROM SaleRecord sr WHERE sr.saleTime BETWEEN :startTime AND :endTime")
-    Double sumTotalAmountByPeriod(@Param("startTime") LocalDateTime startTime,
-                                  @Param("endTime") LocalDateTime endTime);
+    @Query("SELECT COALESCE(SUM(sr.totalAmount), CAST(0 AS BigDecimal)) FROM SaleRecord sr WHERE sr.saleTime BETWEEN :startTime AND :endTime")
+    BigDecimal sumTotalAmountByPeriod(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 
     // 统计每天的销售数据（用于需求预测）
-    @Query("SELECT DATE(sr.saleTime), sr.medicine.id, SUM(sr.quantity) " +
-            "FROM SaleRecord sr " +
-            "WHERE sr.saleTime BETWEEN :startDate AND :endDate " +
-            "GROUP BY DATE(sr.saleTime), sr.medicine.id " +
-            "ORDER BY DATE(sr.saleTime)")
+    @Query(value = "SELECT CAST(sr.sale_time AS DATE), sr.medicine_id, SUM(sr.quantity) " +
+            "FROM sale_record sr " +
+            "WHERE sr.sale_time BETWEEN :startDate AND :endDate " +
+            "GROUP BY CAST(sr.sale_time AS DATE), sr.medicine_id " +
+            "ORDER BY CAST(sr.sale_time AS DATE)", nativeQuery = true)
     List<Object[]> findDailySales(@Param("startDate") LocalDateTime startDate,
                                   @Param("endDate") LocalDateTime endDate);
 
@@ -79,4 +82,50 @@ public interface SaleRecordRepository extends JpaRepository<SaleRecord, Long> {
             "ORDER BY totalQuantity DESC")
     List<Object[]> findSalesBySymptom(@Param("startDate") LocalDateTime startDate,
                                       @Param("endDate") LocalDateTime endDate);
+
+    // 根据销售记录ID查询关联的药品详情
+    @Query("SELECT sr.medicine FROM SaleRecord sr WHERE sr.id = :saleRecordId")
+    Medicine findMedicineBySaleRecordId(@Param("saleRecordId") Long saleRecordId);
+
+    // 根据销售记录ID查询关联的操作员详情
+    @Query("SELECT sr.operator FROM SaleRecord sr WHERE sr.id = :saleRecordId")
+    User findOperatorBySaleRecordId(@Param("saleRecordId") Long saleRecordId);
+
+    // 根据销售记录ID查询关联的症状列表
+    @Query("SELECT sr.symptom FROM SaleRecord sr WHERE sr.id = :saleRecordId")
+    List<Symptom> findSymptomsBySaleRecordId(@Param("saleRecordId") Long saleRecordId);
+
+    // 根据操作员ID查询销售记录（带分页）
+    @Query("SELECT sr FROM SaleRecord sr WHERE sr.operator.id = :operatorId ORDER BY sr.saleTime DESC")
+    Page<SaleRecord> findByOperatorIdWithPagination(@Param("operatorId") Long operatorId, Pageable pageable);
+
+    // 根据顾客类型查询销售记录
+    @Query("SELECT sr FROM SaleRecord sr WHERE sr.customerType = :customerType ORDER BY sr.saleTime DESC")
+    List<SaleRecord> findByCustomerType(@Param("customerType") Integer customerType);
+
+    // 统计操作员的销售业绩
+    @Query("SELECT sr.operator.id, sr.operator.realName, COUNT(sr) as recordCount, SUM(sr.totalAmount) as totalAmount " +
+            "FROM SaleRecord sr WHERE sr.saleTime BETWEEN :startDate AND :endDate " +
+            "GROUP BY sr.operator.id, sr.operator.realName " +
+            "ORDER BY totalAmount DESC")
+    List<Object[]> findOperatorSalesPerformance(@Param("startDate") LocalDateTime startDate,
+                                               @Param("endDate") LocalDateTime endDate);
+
+    // 统计每天的销售总额
+    @Query(value = "SELECT CAST(sr.sale_time AS DATE), SUM(sr.total_amount) as dailyAmount " +
+            "FROM sale_record sr WHERE sr.sale_time BETWEEN :startDate AND :endDate " +
+            "GROUP BY CAST(sr.sale_time AS DATE) " +
+            "ORDER BY CAST(sr.sale_time AS DATE)", nativeQuery = true)
+    List<Object[]> findDailySalesAmount(@Param("startDate") LocalDateTime startDate,
+                                        @Param("endDate") LocalDateTime endDate);
+
+    // 查询销售额最高的前N个药品
+    @Query("SELECT m.id, m.name, SUM(sr.totalAmount) as totalSales " +
+            "FROM SaleRecord sr JOIN sr.medicine m " +
+            "WHERE sr.saleTime BETWEEN :startDate AND :endDate " +
+            "GROUP BY m.id, m.name " +
+            "ORDER BY totalSales DESC")
+    List<Object[]> findTopSellingMedicinesByAmount(@Param("startDate") LocalDateTime startDate,
+                                                  @Param("endDate") LocalDateTime endDate,
+                                                  Pageable pageable);
 }
