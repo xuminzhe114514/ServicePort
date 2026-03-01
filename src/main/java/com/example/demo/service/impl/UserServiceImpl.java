@@ -67,8 +67,41 @@ public class UserServiceImpl extends BaseServiceImpl<User, Long, UserRepository>
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public User findById(Long id) {
+        return repository.findById(id).orElse(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<User> findAll() {
+        return repository.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<User> findAll(Pageable pageable) {
         return repository.findAll(pageable);
+    }
+
+    @Override
+    @Transactional
+    public User update(User user) {
+        if (user.getPassword() != null && !user.getPassword().trim().isEmpty() && !isEncrypted(user.getPassword())) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+        return repository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public List<User> saveAll(List<User> users) {
+        users.forEach(user -> {
+            if (user.getPassword() != null && !user.getPassword().trim().isEmpty() && !isEncrypted(user.getPassword())) {
+                user.setPassword(passwordEncoder.encode(user.getPassword()));
+            }
+        });
+        return repository.saveAll(users);
     }
 
     @Override

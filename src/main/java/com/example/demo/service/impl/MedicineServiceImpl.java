@@ -5,6 +5,7 @@ import com.example.demo.entity.Stock;
 import com.example.demo.repository.MedicineRepository;
 import com.example.demo.repository.StockRepository;
 import com.example.demo.service.MedicineService;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -34,27 +35,150 @@ public class MedicineServiceImpl extends BaseServiceImpl<Medicine, Long, Medicin
     @Override
     @Transactional
     public Medicine findByMedicineCode(String medicineCode) {
-        return repository.findByMedicineCode(medicineCode).orElse(null);
+        Medicine medicine = repository.findByMedicineCode(medicineCode).orElse(null);
+        if (medicine != null) {
+            Hibernate.initialize(medicine.getCategory());
+            Hibernate.initialize(medicine.getStocks());
+            Hibernate.initialize(medicine.getSaleRecords());
+            Hibernate.initialize(medicine.getPurchaseOrders());
+            Hibernate.initialize(medicine.getSymptoms());
+        }
+        return medicine;
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Medicine findById(Long id) {
+        Medicine medicine = repository.findById(id).orElse(null);
+        if (medicine != null) {
+            Hibernate.initialize(medicine.getCategory());
+            Hibernate.initialize(medicine.getStocks());
+            Hibernate.initialize(medicine.getSaleRecords());
+            Hibernate.initialize(medicine.getPurchaseOrders());
+            Hibernate.initialize(medicine.getSymptoms());
+        }
+        return medicine;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Medicine> findAll() {
+        List<Medicine> medicines = repository.findAll();
+        if (!medicines.isEmpty()) {
+            medicines.forEach(medicine -> {
+                Hibernate.initialize(medicine.getCategory());
+                Hibernate.initialize(medicine.getStocks());
+                Hibernate.initialize(medicine.getSaleRecords());
+                Hibernate.initialize(medicine.getPurchaseOrders());
+                Hibernate.initialize(medicine.getSymptoms());
+            });
+        }
+        return medicines;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<Medicine> findAll(Pageable pageable) {
-        return repository.findAll(pageable);
+        Page<Medicine> page = repository.findAll(pageable);
+        if (page.hasContent()) {
+            page.getContent().forEach(medicine -> {
+                Hibernate.initialize(medicine.getCategory());
+                Hibernate.initialize(medicine.getStocks());
+                Hibernate.initialize(medicine.getSaleRecords());
+                Hibernate.initialize(medicine.getPurchaseOrders());
+                Hibernate.initialize(medicine.getSymptoms());
+            });
+        }
+        return page;
+    }
+
+    @Override
+    @Transactional
+    public Medicine save(Medicine medicine) {
+        Medicine savedMedicine = repository.save(medicine);
+        if (savedMedicine != null) {
+            Hibernate.initialize(savedMedicine.getCategory());
+            Hibernate.initialize(savedMedicine.getStocks());
+            Hibernate.initialize(savedMedicine.getSaleRecords());
+            Hibernate.initialize(savedMedicine.getPurchaseOrders());
+            Hibernate.initialize(savedMedicine.getSymptoms());
+        }
+        return savedMedicine;
+    }
+
+    @Override
+    @Transactional
+    public Medicine update(Medicine medicine) {
+        Medicine updatedMedicine = repository.save(medicine);
+        if (updatedMedicine != null) {
+            Hibernate.initialize(updatedMedicine.getCategory());
+            Hibernate.initialize(updatedMedicine.getStocks());
+            Hibernate.initialize(updatedMedicine.getSaleRecords());
+            Hibernate.initialize(updatedMedicine.getPurchaseOrders());
+            Hibernate.initialize(updatedMedicine.getSymptoms());
+        }
+        return updatedMedicine;
+    }
+
+    @Override
+    @Transactional
+    public List<Medicine> saveAll(List<Medicine> medicines) {
+        List<Medicine> savedMedicines = repository.saveAll(medicines);
+        if (!savedMedicines.isEmpty()) {
+            savedMedicines.forEach(medicine -> {
+                Hibernate.initialize(medicine.getCategory());
+                Hibernate.initialize(medicine.getStocks());
+                Hibernate.initialize(medicine.getSaleRecords());
+                Hibernate.initialize(medicine.getPurchaseOrders());
+                Hibernate.initialize(medicine.getSymptoms());
+            });
+        }
+        return savedMedicines;
     }
 
     @Override
     public Page<Medicine> findByStatus(Integer status, Pageable pageable) {
-        return repository.findByStatus(status, pageable);
+        Page<Medicine> page = repository.findByStatus(status, pageable);
+        if (page.hasContent()) {
+            page.getContent().forEach(medicine -> {
+                Hibernate.initialize(medicine.getCategory());
+                Hibernate.initialize(medicine.getStocks());
+                Hibernate.initialize(medicine.getSaleRecords());
+                Hibernate.initialize(medicine.getPurchaseOrders());
+                Hibernate.initialize(medicine.getSymptoms());
+            });
+        }
+        return page;
     }
 
     @Override
     public List<Medicine> searchMedicines(String keyword) {
-        return repository.searchMedicines(keyword, 1);
+        List<Medicine> medicines = repository.searchMedicines(keyword, 1);
+        if (!medicines.isEmpty()) {
+            medicines.forEach(medicine -> {
+                Hibernate.initialize(medicine.getCategory());
+                Hibernate.initialize(medicine.getStocks());
+                Hibernate.initialize(medicine.getSaleRecords());
+                Hibernate.initialize(medicine.getPurchaseOrders());
+                Hibernate.initialize(medicine.getSymptoms());
+            });
+        }
+        return medicines;
     }
 
     @Override
     public List<Medicine> findByCategoryId(Long categoryId) {
-        return repository.findByCategoryId(categoryId);
+        List<Medicine> medicines = repository.findByCategoryId(categoryId);
+        if (!medicines.isEmpty()) {
+            medicines.forEach(medicine -> {
+                Hibernate.initialize(medicine.getCategory());
+                Hibernate.initialize(medicine.getStocks());
+                Hibernate.initialize(medicine.getSaleRecords());
+                Hibernate.initialize(medicine.getPurchaseOrders());
+                Hibernate.initialize(medicine.getSymptoms());
+            });
+        }
+        return medicines;
     }
 
     @Override
@@ -63,7 +187,15 @@ public class MedicineServiceImpl extends BaseServiceImpl<Medicine, Long, Medicin
         if (medicine != null) {
             if (retailPrice != null) medicine.setRetailPrice(retailPrice);
             if (purchasePrice != null) medicine.setPurchasePrice(purchasePrice);
-            return save(medicine);
+            Medicine savedMedicine = save(medicine);
+            if (savedMedicine != null) {
+                Hibernate.initialize(savedMedicine.getCategory());
+                Hibernate.initialize(savedMedicine.getStocks());
+                Hibernate.initialize(savedMedicine.getSaleRecords());
+                Hibernate.initialize(savedMedicine.getPurchaseOrders());
+                Hibernate.initialize(savedMedicine.getSymptoms());
+            }
+            return savedMedicine;
         }
         return null;
     }
@@ -92,6 +224,16 @@ public class MedicineServiceImpl extends BaseServiceImpl<Medicine, Long, Medicin
             content = seasonalMedicines.subList(start, end);
         }
 
+        if (!content.isEmpty()) {
+            content.forEach(medicine -> {
+                Hibernate.initialize(medicine.getCategory());
+                Hibernate.initialize(medicine.getStocks());
+                Hibernate.initialize(medicine.getSaleRecords());
+                Hibernate.initialize(medicine.getPurchaseOrders());
+                Hibernate.initialize(medicine.getSymptoms());
+            });
+        }
+
         return new PageImpl<>(content, pageable, total);
     }
 
@@ -113,6 +255,16 @@ public class MedicineServiceImpl extends BaseServiceImpl<Medicine, Long, Medicin
             content = prescriptionMedicines.subList(start, end);
         }
 
+        if (!content.isEmpty()) {
+            content.forEach(medicine -> {
+                Hibernate.initialize(medicine.getCategory());
+                Hibernate.initialize(medicine.getStocks());
+                Hibernate.initialize(medicine.getSaleRecords());
+                Hibernate.initialize(medicine.getPurchaseOrders());
+                Hibernate.initialize(medicine.getSymptoms());
+            });
+        }
+
         return new PageImpl<>(content, pageable, total);
     }
 
@@ -128,6 +280,16 @@ public class MedicineServiceImpl extends BaseServiceImpl<Medicine, Long, Medicin
             content = Collections.emptyList();
         } else {
             content = medicines.subList(start, end);
+        }
+
+        if (!content.isEmpty()) {
+            content.forEach(medicine -> {
+                Hibernate.initialize(medicine.getCategory());
+                Hibernate.initialize(medicine.getStocks());
+                Hibernate.initialize(medicine.getSaleRecords());
+                Hibernate.initialize(medicine.getPurchaseOrders());
+                Hibernate.initialize(medicine.getSymptoms());
+            });
         }
 
         return new PageImpl<>(content, pageable, total);
@@ -161,6 +323,16 @@ public class MedicineServiceImpl extends BaseServiceImpl<Medicine, Long, Medicin
             content = Collections.emptyList();
         } else {
             content = lowStockMedicines.subList(start, end);
+        }
+
+        if (!content.isEmpty()) {
+            content.forEach(medicine -> {
+                Hibernate.initialize(medicine.getCategory());
+                Hibernate.initialize(medicine.getStocks());
+                Hibernate.initialize(medicine.getSaleRecords());
+                Hibernate.initialize(medicine.getPurchaseOrders());
+                Hibernate.initialize(medicine.getSymptoms());
+            });
         }
 
         return new PageImpl<>(content, pageable, total);
@@ -234,6 +406,16 @@ public class MedicineServiceImpl extends BaseServiceImpl<Medicine, Long, Medicin
             content = expiringMedicines.subList(start, end);
         }
 
+        if (!content.isEmpty()) {
+            content.forEach(medicine -> {
+                Hibernate.initialize(medicine.getCategory());
+                Hibernate.initialize(medicine.getStocks());
+                Hibernate.initialize(medicine.getSaleRecords());
+                Hibernate.initialize(medicine.getPurchaseOrders());
+                Hibernate.initialize(medicine.getSymptoms());
+            });
+        }
+
         return new PageImpl<>(content, pageable, total);
     }
 
@@ -256,6 +438,16 @@ public class MedicineServiceImpl extends BaseServiceImpl<Medicine, Long, Medicin
             content = filteredMedicines.subList(start, end);
         }
 
+        if (!content.isEmpty()) {
+            content.forEach(medicine -> {
+                Hibernate.initialize(medicine.getCategory());
+                Hibernate.initialize(medicine.getStocks());
+                Hibernate.initialize(medicine.getSaleRecords());
+                Hibernate.initialize(medicine.getPurchaseOrders());
+                Hibernate.initialize(medicine.getSymptoms());
+            });
+        }
+
         return new PageImpl<>(content, pageable, total);
     }
 
@@ -271,6 +463,16 @@ public class MedicineServiceImpl extends BaseServiceImpl<Medicine, Long, Medicin
             content = Collections.emptyList();
         } else {
             content = allResults.subList(start, end);
+        }
+
+        if (!content.isEmpty()) {
+            content.forEach(medicine -> {
+                Hibernate.initialize(medicine.getCategory());
+                Hibernate.initialize(medicine.getStocks());
+                Hibernate.initialize(medicine.getSaleRecords());
+                Hibernate.initialize(medicine.getPurchaseOrders());
+                Hibernate.initialize(medicine.getSymptoms());
+            });
         }
 
         return new PageImpl<>(content, pageable, total);

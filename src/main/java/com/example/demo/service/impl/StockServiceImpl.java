@@ -5,6 +5,7 @@ import com.example.demo.entity.Stock;
 import com.example.demo.repository.MedicineRepository;
 import com.example.demo.repository.StockRepository;
 import com.example.demo.service.StockService;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -33,6 +34,72 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
     private MedicineRepository medicineRepository;
 
     @Override
+    @Transactional(readOnly = true)
+    public Stock findById(Long id) {
+        Stock stock = repository.findById(id).orElse(null);
+        if (stock != null) {
+            Hibernate.initialize(stock.getMedicine());
+        }
+        return stock;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Stock> findAll() {
+        List<Stock> stocks = repository.findAll();
+        if (!stocks.isEmpty()) {
+            stocks.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+        return stocks;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Stock> findAll(Pageable pageable) {
+        Page<Stock> page = repository.findAll(pageable);
+        if (page.hasContent()) {
+            page.getContent().forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+        return page;
+    }
+
+    @Override
+    @Transactional
+    public Stock save(Stock stock) {
+        Stock savedStock = repository.save(stock);
+        if (savedStock != null) {
+            Hibernate.initialize(savedStock.getMedicine());
+        }
+        return savedStock;
+    }
+
+    @Override
+    @Transactional
+    public Stock update(Stock stock) {
+        Stock updatedStock = repository.save(stock);
+        if (updatedStock != null) {
+            Hibernate.initialize(updatedStock.getMedicine());
+        }
+        return updatedStock;
+    }
+
+    @Override
+    @Transactional
+    public List<Stock> saveAll(List<Stock> stocks) {
+        List<Stock> savedStocks = repository.saveAll(stocks);
+        if (!savedStocks.isEmpty()) {
+            savedStocks.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+        return savedStocks;
+    }
+
+    @Override
     public Page<Stock> findByMedicineId(Long medicineId, Pageable pageable) {
         List<Stock> allStocks = repository.findByMedicineId(medicineId);
 
@@ -50,6 +117,12 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
             content = Collections.emptyList();
         } else {
             content = filtered.subList(start, Math.min(end, total));
+        }
+
+        if (!content.isEmpty()) {
+            content.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
         }
 
         return new PageImpl<>(content, pageable, total);
@@ -80,6 +153,13 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         } else {
             content = filtered.subList(start, Math.min(end, total));
         }
+
+        if (!content.isEmpty()) {
+            content.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+
         return new PageImpl<>(content, pageable, total);
 
     }
@@ -103,6 +183,13 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         } else {
             content = filtered.subList(start, Math.min(end, total));
         }
+
+        if (!content.isEmpty()) {
+            content.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+
         return new PageImpl<>(content, pageable, total);
     }
 
@@ -189,6 +276,13 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         } else {
             content = allStocks.subList(start, Math.min(end, total));
         }
+
+        if (!content.isEmpty()) {
+            content.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+
         return new PageImpl<>(content, pageable, total);
     }
 
@@ -204,6 +298,13 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         } else {
             content = allStocks.subList(start, Math.min(end, total));
         }
+
+        if (!content.isEmpty()) {
+            content.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+
         return new PageImpl<>(content, pageable, total);
     }
 
@@ -219,6 +320,13 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         } else {
             content = byBatchNumberStocks.subList(start, Math.min(end, total));
         }
+
+        if (!content.isEmpty()) {
+            content.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+
         return new PageImpl<>(content, pageable, total);
     }
 
@@ -226,9 +334,17 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
     public List<Stock> findExpiringWithinDays(int days) {
         LocalDate now = LocalDate.now();
         LocalDate endDate = now.plusDays(days);
-        return repository.findExpiringStock(now, endDate).stream()
+        List<Stock> stocks = repository.findExpiringStock(now, endDate).stream()
                 .filter(stock -> stock.getStatus() == 1)
                 .collect(Collectors.toList());
+
+        if (!stocks.isEmpty()) {
+            stocks.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+
+        return stocks;
     }
 
     @Override
@@ -275,6 +391,12 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
                 .filter(stock -> stock.getStatus() == 1)
                 .collect(Collectors.toList());
 
+        if (!filtered.isEmpty()) {
+            filtered.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+
         return getPage(filtered, pageable, filtered::size);
     }
 
@@ -289,6 +411,12 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
                 .filter(stock -> stock.getStatus() == 1)
                 .collect(Collectors.toList());
 
+        if (!expiredStocks.isEmpty()) {
+            expiredStocks.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+
         return getPage(expiredStocks, pageable, expiredStocks::size);
     }
 
@@ -302,6 +430,12 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         List<Stock> filtered = allStocks.stream()
                 .filter(stock -> stock.getStatus() == 1)
                 .collect(Collectors.toList());
+
+        if (!filtered.isEmpty()) {
+            filtered.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
 
         return getPage(filtered, pageable, filtered::size);
     }
@@ -390,6 +524,12 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
             content = alerts.subList(start, end);
         }
 
+        if (!content.isEmpty()) {
+            content.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+
         return new PageImpl<>(content, pageable, total);
     }
 
@@ -465,12 +605,25 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
             content = allStocks.subList(start, end);
         }
 
+        if (!content.isEmpty()) {
+            content.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+
         return new PageImpl<>(content, pageable, total);
     }
 
     @Override
     public Page<Stock> findByShelfLocationContaining(String location, Pageable pageable) {
         List<Stock> stocks = repository.findByShelfLocationContaining(location);
+
+        if (!stocks.isEmpty()) {
+            stocks.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+
         return getPage(stocks, pageable, stocks::size);
     }
 }

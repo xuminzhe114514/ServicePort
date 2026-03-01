@@ -5,6 +5,7 @@ import com.example.demo.entity.User;
 import com.example.demo.repository.SaleRecordRepository;
 import com.example.demo.service.SaleRecordService;
 import com.example.demo.service.UserService;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -36,27 +37,130 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
 
     @Override
     public SaleRecord findByRecordNo(String recordNo) {
-        return repository.findByRecordNo(recordNo).orElse(null);
+        SaleRecord record = repository.findByRecordNo(recordNo).orElse(null);
+        if (record != null) {
+            Hibernate.initialize(record.getMedicine());
+            Hibernate.initialize(record.getOperator());
+            Hibernate.initialize(record.getSymptom());
+        }
+        return record;
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public SaleRecord findById(Long id) {
+        SaleRecord record = repository.findById(id).orElse(null);
+        if (record != null) {
+            Hibernate.initialize(record.getMedicine());
+            Hibernate.initialize(record.getOperator());
+            Hibernate.initialize(record.getSymptom());
+        }
+        return record;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SaleRecord> findAll() {
+        List<SaleRecord> records = repository.findAll();
+        if (!records.isEmpty()) {
+            records.forEach(record -> {
+                Hibernate.initialize(record.getMedicine());
+                Hibernate.initialize(record.getOperator());
+                Hibernate.initialize(record.getSymptom());
+            });
+        }
+        return records;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<SaleRecord> findAll(Pageable pageable) {
-        return repository.findAll(pageable);
+        Page<SaleRecord> page = repository.findAll(pageable);
+        if (page.hasContent()) {
+            page.getContent().forEach(record -> {
+                Hibernate.initialize(record.getMedicine());
+                Hibernate.initialize(record.getOperator());
+                Hibernate.initialize(record.getSymptom());
+            });
+        }
+        return page;
+    }
+
+    @Override
+    @Transactional
+    public SaleRecord save(SaleRecord record) {
+        SaleRecord savedRecord = repository.save(record);
+        if (savedRecord != null) {
+            Hibernate.initialize(savedRecord.getMedicine());
+            Hibernate.initialize(savedRecord.getOperator());
+            Hibernate.initialize(savedRecord.getSymptom());
+        }
+        return savedRecord;
+    }
+
+    @Override
+    @Transactional
+    public SaleRecord update(SaleRecord record) {
+        SaleRecord updatedRecord = repository.save(record);
+        if (updatedRecord != null) {
+            Hibernate.initialize(updatedRecord.getMedicine());
+            Hibernate.initialize(updatedRecord.getOperator());
+            Hibernate.initialize(updatedRecord.getSymptom());
+        }
+        return updatedRecord;
+    }
+
+    @Override
+    @Transactional
+    public List<SaleRecord> saveAll(List<SaleRecord> records) {
+        List<SaleRecord> savedRecords = repository.saveAll(records);
+        if (!savedRecords.isEmpty()) {
+            savedRecords.forEach(record -> {
+                Hibernate.initialize(record.getMedicine());
+                Hibernate.initialize(record.getOperator());
+                Hibernate.initialize(record.getSymptom());
+            });
+        }
+        return savedRecords;
     }
 
     @Override
     public List<SaleRecord> findBySaleTimeBetween(LocalDateTime startTime, LocalDateTime endTime) {
-        return repository.findBySaleTimeBetween(startTime, endTime);
+        List<SaleRecord> records = repository.findBySaleTimeBetween(startTime, endTime);
+        if (!records.isEmpty()) {
+            records.forEach(record -> {
+                Hibernate.initialize(record.getMedicine());
+                Hibernate.initialize(record.getOperator());
+                Hibernate.initialize(record.getSymptom());
+            });
+        }
+        return records;
     }
 
     @Override
     public List<SaleRecord> findByMedicineId(Long medicineId) {
-        return repository.findByMedicineId(medicineId);
+        List<SaleRecord> records = repository.findByMedicineId(medicineId);
+        if (!records.isEmpty()) {
+            records.forEach(record -> {
+                Hibernate.initialize(record.getMedicine());
+                Hibernate.initialize(record.getOperator());
+                Hibernate.initialize(record.getSymptom());
+            });
+        }
+        return records;
     }
 
     @Override
     public List<SaleRecord> findByOperatorId(Long operatorId) {
-        return repository.findByOperatorId(operatorId);
+        List<SaleRecord> records = repository.findByOperatorId(operatorId);
+        if (!records.isEmpty()) {
+            records.forEach(record -> {
+                Hibernate.initialize(record.getMedicine());
+                Hibernate.initialize(record.getOperator());
+                Hibernate.initialize(record.getSymptom());
+            });
+        }
+        return records;
     }
 
     @Override
@@ -123,7 +227,13 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
             saleRecord.calculateTotalAmount();
         }
 
-        return repository.save(saleRecord);
+        SaleRecord savedRecord = repository.save(saleRecord);
+        if (savedRecord != null) {
+            Hibernate.initialize(savedRecord.getMedicine());
+            Hibernate.initialize(savedRecord.getOperator());
+            Hibernate.initialize(savedRecord.getSymptom());
+        }
+        return savedRecord;
     }
 
     // 新增方法实现
@@ -139,6 +249,14 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
             content = Collections.emptyList();
         } else {
             content = sales.subList(start, end);
+        }
+
+        if (!content.isEmpty()) {
+            content.forEach(record -> {
+                Hibernate.initialize(record.getMedicine());
+                Hibernate.initialize(record.getOperator());
+                Hibernate.initialize(record.getSymptom());
+            });
         }
 
         return new PageImpl<>(content, pageable, total);
@@ -300,6 +418,14 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
             content = Collections.emptyList();
         } else {
             content = prescriptionSales.subList(start, end);
+        }
+
+        if (!content.isEmpty()) {
+            content.forEach(record -> {
+                Hibernate.initialize(record.getMedicine());
+                Hibernate.initialize(record.getOperator());
+                Hibernate.initialize(record.getSymptom());
+            });
         }
 
         return new PageImpl<>(content, pageable, total);

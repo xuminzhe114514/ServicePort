@@ -9,6 +9,7 @@ import com.example.demo.repository.StockRepository;
 import com.example.demo.service.PredictionResultService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -61,19 +62,123 @@ public class PredictionResultServiceImpl extends BaseServiceImpl<PredictionResul
     protected PredictionResultServiceImpl(PredictionResultRepository repository) {super(repository);}
 
     @Override
-    public List<PredictionResult> findByMedicineId(Long medicineId) {return repository.findByMedicineId(medicineId);}
+    @Transactional(readOnly = true)
+    public PredictionResult findById(Long id) {
+        PredictionResult result = repository.findById(id).orElse(null);
+        if (result != null) {
+            Hibernate.initialize(result.getMedicine());
+        }
+        return result;
+    }
 
     @Override
-    public List<PredictionResult> findByPredictionDate(LocalDate predictionDate) {return repository.findByPredictionDate(predictionDate);}
+    @Transactional(readOnly = true)
+    public List<PredictionResult> findAll() {
+        List<PredictionResult> results = repository.findAll();
+        if (!results.isEmpty()) {
+            results.forEach(result -> {
+                Hibernate.initialize(result.getMedicine());
+            });
+        }
+        return results;
+    }
 
     @Override
-    public PredictionResult findLatestByMedicineId(Long medicineId) {return repository.findFirstByMedicineIdOrderByPredictionDateDesc(medicineId).orElse(null);}
+    @Transactional(readOnly = true)
+    public Page<PredictionResult> findAll(Pageable pageable) {
+        Page<PredictionResult> page = repository.findAll(pageable);
+        if (page.hasContent()) {
+            page.getContent().forEach(result -> {
+                Hibernate.initialize(result.getMedicine());
+            });
+        }
+        return page;
+    }
 
     @Override
-    public List<PredictionResult> findByPredictionDateRange(LocalDate startDate, LocalDate endDate) {return repository.findByPredictionDateBetween(startDate, endDate);}
+    @Transactional
+    public PredictionResult save(PredictionResult result) {
+        PredictionResult savedResult = repository.save(result);
+        if (savedResult != null) {
+            Hibernate.initialize(savedResult.getMedicine());
+        }
+        return savedResult;
+    }
 
     @Override
-    public List<PredictionResult> findNeedReprediction(Double threshold) {return repository.findNeedReprediction(threshold != null ? BigDecimal.valueOf(threshold) : null);}
+    @Transactional
+    public PredictionResult update(PredictionResult result) {
+        PredictionResult updatedResult = repository.save(result);
+        if (updatedResult != null) {
+            Hibernate.initialize(updatedResult.getMedicine());
+        }
+        return updatedResult;
+    }
+
+    @Override
+    @Transactional
+    public List<PredictionResult> saveAll(List<PredictionResult> results) {
+        List<PredictionResult> savedResults = repository.saveAll(results);
+        if (!savedResults.isEmpty()) {
+            savedResults.forEach(result -> {
+                Hibernate.initialize(result.getMedicine());
+            });
+        }
+        return savedResults;
+    }
+
+    @Override
+    public List<PredictionResult> findByMedicineId(Long medicineId) {
+        List<PredictionResult> results = repository.findByMedicineId(medicineId);
+        if (!results.isEmpty()) {
+            results.forEach(result -> {
+                Hibernate.initialize(result.getMedicine());
+            });
+        }
+        return results;
+    }
+
+    @Override
+    public List<PredictionResult> findByPredictionDate(LocalDate predictionDate) {
+        List<PredictionResult> results = repository.findByPredictionDate(predictionDate);
+        if (!results.isEmpty()) {
+            results.forEach(result -> {
+                Hibernate.initialize(result.getMedicine());
+            });
+        }
+        return results;
+    }
+
+    @Override
+    public PredictionResult findLatestByMedicineId(Long medicineId) {
+        PredictionResult result = repository.findFirstByMedicineIdOrderByPredictionDateDesc(medicineId).orElse(null);
+        if (result != null) {
+            Hibernate.initialize(result.getMedicine());
+        }
+        return result;
+    }
+
+    @Override
+    public List<PredictionResult> findByPredictionDateRange(LocalDate startDate, LocalDate endDate) {
+        List<PredictionResult> results = repository.findByPredictionDateBetween(startDate, endDate);
+        if (!results.isEmpty()) {
+            results.forEach(result -> {
+                Hibernate.initialize(result.getMedicine());
+            });
+        }
+        return results;
+    }
+
+    @Override
+    public List<PredictionResult> findNeedReprediction(Double threshold) {
+        List<PredictionResult> results = repository.findNeedReprediction(threshold != null ? BigDecimal.valueOf(threshold) : null);
+        if (!results.isEmpty()) {
+            results.forEach(result -> {
+                Hibernate.initialize(result.getMedicine());
+            });
+        }
+        return results;
+    }
 
     @Override
     public Map<String, Double> getAverageAccuracyByModel() {

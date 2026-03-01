@@ -11,6 +11,7 @@ import com.example.demo.repository.SaleRecordRepository;
 import com.example.demo.repository.StockRepository;
 import com.example.demo.service.PurchaseOrderService;
 import com.example.demo.service.UserService;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -46,13 +47,86 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
     private StockRepository stockRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public PurchaseOrder findByOrderNo(String orderNo) {
-        return repository.findByOrderNo(orderNo).orElse(null);
+        PurchaseOrder order = repository.findByOrderNo(orderNo).orElse(null);
+        if (order != null) {
+            Hibernate.initialize(order.getMedicine());
+            Hibernate.initialize(order.getOperator());
+        }
+        return order;
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public PurchaseOrder findById(Long id) {
+        PurchaseOrder order = repository.findById(id).orElse(null);
+        if (order != null) {
+            Hibernate.initialize(order.getMedicine());
+            Hibernate.initialize(order.getOperator());
+        }
+        return order;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PurchaseOrder> findAll() {
+        List<PurchaseOrder> orders = repository.findAll();
+        if (!orders.isEmpty()) {
+            orders.forEach(order -> {
+                Hibernate.initialize(order.getMedicine());
+                Hibernate.initialize(order.getOperator());
+            });
+        }
+        return orders;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<PurchaseOrder> findAll(Pageable pageable) {
-        return repository.findAll(pageable);
+        Page<PurchaseOrder> page = repository.findAll(pageable);
+        if (page.hasContent()) {
+            page.getContent().forEach(order -> {
+                Hibernate.initialize(order.getMedicine());
+                Hibernate.initialize(order.getOperator());
+            });
+        }
+        return page;
+    }
+
+    @Override
+    @Transactional
+    public PurchaseOrder save(PurchaseOrder order) {
+        PurchaseOrder savedOrder = repository.save(order);
+        if (savedOrder != null) {
+            Hibernate.initialize(savedOrder.getMedicine());
+            Hibernate.initialize(savedOrder.getOperator());
+        }
+        return savedOrder;
+    }
+
+    @Override
+    @Transactional
+    public PurchaseOrder update(PurchaseOrder order) {
+        PurchaseOrder updatedOrder = repository.save(order);
+        if (updatedOrder != null) {
+            Hibernate.initialize(updatedOrder.getMedicine());
+            Hibernate.initialize(updatedOrder.getOperator());
+        }
+        return updatedOrder;
+    }
+
+    @Override
+    @Transactional
+    public List<PurchaseOrder> saveAll(List<PurchaseOrder> orders) {
+        List<PurchaseOrder> savedOrders = repository.saveAll(orders);
+        if (!savedOrders.isEmpty()) {
+            savedOrders.forEach(order -> {
+                Hibernate.initialize(order.getMedicine());
+                Hibernate.initialize(order.getOperator());
+            });
+        }
+        return savedOrders;
     }
 
     @Override
@@ -67,6 +141,13 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
             pageOrders = new ArrayList<>();
         }else {
             pageOrders = allOrders.subList(start, Math.min(end,total));
+        }
+
+        if (!pageOrders.isEmpty()) {
+            pageOrders.forEach(order -> {
+                Hibernate.initialize(order.getMedicine());
+                Hibernate.initialize(order.getOperator());
+            });
         }
 
         return new PageImpl<>(pageOrders, pageable, total);
@@ -86,6 +167,13 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
             pageOrders = ordersById.subList(start, Math.min(end,total));
         }
 
+        if (!pageOrders.isEmpty()) {
+            pageOrders.forEach(order -> {
+                Hibernate.initialize(order.getMedicine());
+                Hibernate.initialize(order.getOperator());
+            });
+        }
+
         return new PageImpl<>(pageOrders, pageable, total);
     }
 
@@ -103,6 +191,13 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
             pageOrders = pendingOrders.subList(start, Math.min(end,total));
         }
 
+        if (!pageOrders.isEmpty()) {
+            pageOrders.forEach(order -> {
+                Hibernate.initialize(order.getMedicine());
+                Hibernate.initialize(order.getOperator());
+            });
+        }
+
         return new PageImpl<>(pageOrders, pageable, total);
     }
 
@@ -118,6 +213,13 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
             pageOrders = new ArrayList<>();
         }else {
             pageOrders = overdueOrders.subList(start, Math.min(end,total));
+        }
+
+        if (!pageOrders.isEmpty()) {
+            pageOrders.forEach(order -> {
+                Hibernate.initialize(order.getMedicine());
+                Hibernate.initialize(order.getOperator());
+            });
         }
 
         return new PageImpl<>(pageOrders, pageable, total);
@@ -152,7 +254,12 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
             order.calculateTotalAmount();
         }
 
-        return repository.save(order);
+        PurchaseOrder savedOrder = repository.save(order);
+        if (savedOrder != null) {
+            Hibernate.initialize(savedOrder.getMedicine());
+            Hibernate.initialize(savedOrder.getOperator());
+        }
+        return savedOrder;
     }
 
     @Override
@@ -160,7 +267,12 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
         PurchaseOrder order = findById(orderId);
         if (order != null && order.isPending()) {
             order.setOrderStatus(1);
-            return repository.save(order);
+            PurchaseOrder savedOrder = repository.save(order);
+            if (savedOrder != null) {
+                Hibernate.initialize(savedOrder.getMedicine());
+                Hibernate.initialize(savedOrder.getOperator());
+            }
+            return savedOrder;
         }
         return null;
     }
@@ -171,7 +283,12 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
         if (order != null && (order.isPending() || order.isConfirmed())) {
             order.setOrderStatus(2);
             order.setActualArrival(LocalDateTime.now());
-            return repository.save(order);
+            PurchaseOrder savedOrder = repository.save(order);
+            if (savedOrder != null) {
+                Hibernate.initialize(savedOrder.getMedicine());
+                Hibernate.initialize(savedOrder.getOperator());
+            }
+            return savedOrder;
         }
         return null;
     }
@@ -181,7 +298,12 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
         PurchaseOrder order = findById(orderId);
         if (order != null && !order.isArrived() && !order.isCancelled()) {
             order.setOrderStatus(3);
-            return repository.save(order);
+            PurchaseOrder savedOrder = repository.save(order);
+            if (savedOrder != null) {
+                Hibernate.initialize(savedOrder.getMedicine());
+                Hibernate.initialize(savedOrder.getOperator());
+            }
+            return savedOrder;
         }
         return null;
     }
@@ -228,6 +350,14 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
         }else {
             orders = targetOrders.subList(start, Math.min(end,total));
         }
+
+        if (!orders.isEmpty()) {
+            orders.forEach(order -> {
+                Hibernate.initialize(order.getMedicine());
+                Hibernate.initialize(order.getOperator());
+            });
+        }
+
         return new PageImpl<>(orders, pageable, total);
 
     }
@@ -246,6 +376,14 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
         }else {
             orders = targetOrders.subList(start, Math.min(end,total));
         }
+
+        if (!orders.isEmpty()) {
+            orders.forEach(order -> {
+                Hibernate.initialize(order.getMedicine());
+                Hibernate.initialize(order.getOperator());
+            });
+        }
+
         return new PageImpl<>(orders, pageable, total);
     }
 
@@ -263,6 +401,14 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
         }else {
             orders = targetOrders.subList(start, Math.min(end,total));
         }
+
+        if (!orders.isEmpty()) {
+            orders.forEach(order -> {
+                Hibernate.initialize(order.getMedicine());
+                Hibernate.initialize(order.getOperator());
+            });
+        }
+
         return new PageImpl<>(orders, pageable, total);
     }
 
@@ -468,6 +614,13 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
             content = Collections.emptyList();
         } else {
             content = upcomingOrders.subList(start, end);
+        }
+
+        if (!content.isEmpty()) {
+            content.forEach(order -> {
+                Hibernate.initialize(order.getMedicine());
+                Hibernate.initialize(order.getOperator());
+            });
         }
 
         return new PageImpl<>(content, pageable, total);

@@ -903,6 +903,11 @@ public class MedicineController {
             categoryInfo.put("id", medicine.getCategory().getId());
             categoryInfo.put("name", medicine.getCategory().getName());
             medicineResponse.put("category", categoryInfo);
+        }else {
+            Map<String, Object> categoryInfo = new HashMap<>();
+            categoryInfo.put("id", 0);
+            categoryInfo.put("name", null);
+            medicineResponse.put("category", categoryInfo);
         }
 
         medicineResponse.put("specification", medicine.getSpecification());

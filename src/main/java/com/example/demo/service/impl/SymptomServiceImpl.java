@@ -8,6 +8,7 @@ import com.example.demo.repository.SaleRecordRepository;
 import com.example.demo.repository.SymptomRepository;
 import com.example.demo.service.SaleRecordService;
 import com.example.demo.service.SymptomService;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -39,12 +40,20 @@ public class SymptomServiceImpl extends BaseServiceImpl<Symptom, Integer, Sympto
     @Override
     public Symptom findByName(String name) {
         Optional<Symptom> symptom = repository.findByName(name);
-        return symptom.orElse(null);
+        Symptom result = symptom.orElse(null);
+        if (result != null) {
+            Hibernate.initialize(result);
+        }
+        return result;
     }
 
     @Override
     public List<Symptom> findByNameContaining(String name) {
-        return repository.findByNameContaining(name);
+        List<Symptom> symptoms = repository.findByNameContaining(name);
+        if (!symptoms.isEmpty()) {
+            symptoms.forEach(Hibernate::initialize);
+        }
+        return symptoms;
     }
 
     @Override
@@ -54,17 +63,69 @@ public class SymptomServiceImpl extends BaseServiceImpl<Symptom, Integer, Sympto
 
     @Override
     public List<Symptom> findByDescriptionContaining(String description) {
-        return repository.findByDescriptionContaining(description);
+        List<Symptom> symptoms = repository.findByDescriptionContaining(description);
+        if (!symptoms.isEmpty()) {
+            symptoms.forEach(Hibernate::initialize);
+        }
+        return symptoms;
     }
 
     @Override
     public List<Symptom> searchSymptoms(String keyword) {
-        return repository.searchSymptoms(keyword);
+        List<Symptom> symptoms = repository.searchSymptoms(keyword);
+        if (!symptoms.isEmpty()) {
+            symptoms.forEach(Hibernate::initialize);
+        }
+        return symptoms;
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Symptom findById(Integer id) {
+        Symptom symptom = repository.findById(id).orElse(null);
+        if (symptom != null) {
+            Hibernate.initialize(symptom);
+        }
+        return symptom;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Symptom> findAll() {
+        List<Symptom> symptoms = repository.findAll();
+        if (!symptoms.isEmpty()) {
+            symptoms.forEach(Hibernate::initialize);
+        }
+        return symptoms;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<Symptom> findAll(Pageable pageable) {
-        return repository.findAll(pageable);
+        Page<Symptom> page = repository.findAll(pageable);
+        if (page.hasContent()) {
+            page.getContent().forEach(Hibernate::initialize);
+        }
+        return page;
+    }
+
+    @Override
+    @Transactional
+    public Symptom update(Symptom symptom) {
+        if (!repository.existsById(symptom.getId())) {
+            throw new IllegalArgumentException("症状不存在: " + symptom.getId());
+        }
+        if (repository.existsByName(symptom.getName())) {
+            Symptom existing = repository.findByName(symptom.getName()).orElse(null);
+            if (existing != null && !existing.getId().equals(symptom.getId())) {
+                throw new IllegalArgumentException("症状名称已存在: " + symptom.getName());
+            }
+        }
+        Symptom updatedSymptom = repository.save(symptom);
+        if (updatedSymptom != null) {
+            Hibernate.initialize(updatedSymptom);
+        }
+        return updatedSymptom;
     }
 
     @Override
@@ -81,12 +142,20 @@ public class SymptomServiceImpl extends BaseServiceImpl<Symptom, Integer, Sympto
             pageContent = allSymptoms.subList(start, Math.min(total, end));
         }
 
+        if (!pageContent.isEmpty()) {
+            pageContent.forEach(Hibernate::initialize);
+        }
+
         return new PageImpl<>(pageContent, pageable, total);
     }
 
     @Override
     public List<Symptom> saveAll(List<Symptom> symptoms) {
-        return repository.saveAll(symptoms);
+        List<Symptom> savedSymptoms = repository.saveAll(symptoms);
+        if (!savedSymptoms.isEmpty()) {
+            savedSymptoms.forEach(Hibernate::initialize);
+        }
+        return savedSymptoms;
     }
 
     @Override
@@ -109,7 +178,11 @@ public class SymptomServiceImpl extends BaseServiceImpl<Symptom, Integer, Sympto
             }
         }
 
-        return super.save(symptom);
+        Symptom savedSymptom = super.save(symptom);
+        if (savedSymptom != null) {
+            Hibernate.initialize(savedSymptom);
+        }
+        return savedSymptom;
     }
 
     @Override
@@ -134,6 +207,11 @@ public class SymptomServiceImpl extends BaseServiceImpl<Symptom, Integer, Sympto
         }else {
             pageContent = medicine.getSymptoms().subList(start, Math.min(total, end));
         }
+
+        if (!pageContent.isEmpty()) {
+            pageContent.forEach(Hibernate::initialize);
+        }
+
         return new PageImpl<>(pageContent, pageable, total);
     }
 
@@ -157,6 +235,10 @@ public class SymptomServiceImpl extends BaseServiceImpl<Symptom, Integer, Sympto
             content = Collections.emptyList();
         } else {
             content = commonSymptoms.subList(startIdx, endIdx);
+        }
+
+        if (!content.isEmpty()) {
+            content.forEach(Hibernate::initialize);
         }
 
         return new PageImpl<>(content, pageable, total);
@@ -200,6 +282,10 @@ public class SymptomServiceImpl extends BaseServiceImpl<Symptom, Integer, Sympto
             content = symptomsWithMedicines.subList(start, end);
         }
 
+        if (!content.isEmpty()) {
+            content.forEach(Hibernate::initialize);
+        }
+
         return new PageImpl<>(content, pageable, total);
     }
 
@@ -218,6 +304,11 @@ public class SymptomServiceImpl extends BaseServiceImpl<Symptom, Integer, Sympto
         }else {
             pageContent = saleRecord.getSymptom().subList(start, Math.min(total, end));
         }
+
+        if (!pageContent.isEmpty()) {
+            pageContent.forEach(Hibernate::initialize);
+        }
+
         return new PageImpl<>(pageContent, pageable, total);
     }
 }
