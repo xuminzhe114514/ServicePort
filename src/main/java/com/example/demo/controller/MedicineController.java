@@ -917,6 +917,7 @@ public class MedicineController {
         medicineResponse.put("purchasePrice", medicine.getPurchasePrice());
         medicineResponse.put("status", medicine.getStatus());
         medicineResponse.put("createTime", medicine.getCreateTime());
+        medicineResponse.put("symptoms", medicine.getSymptoms());
 
         return medicineResponse;
     }

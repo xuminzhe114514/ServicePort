@@ -46,13 +46,31 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
     @Autowired
     private StockRepository stockRepository;
 
+    private void initializePurchaseOrderAssociations(PurchaseOrder order) {
+        if (order != null) {
+            Hibernate.initialize(order.getMedicine());
+            Hibernate.initialize(order.getOperator());
+            
+            if (order.getMedicine() != null) {
+                Hibernate.initialize(order.getMedicine().getCategory());
+                Hibernate.initialize(order.getMedicine().getStocks());
+                Hibernate.initialize(order.getMedicine().getSaleRecords());
+                Hibernate.initialize(order.getMedicine().getPurchaseOrders());
+                Hibernate.initialize(order.getMedicine().getSymptoms());
+            }
+            
+            if (order.getOperator() != null) {
+                Hibernate.initialize(order.getOperator());
+            }
+        }
+    }
+
     @Override
     @Transactional(readOnly = true)
     public PurchaseOrder findByOrderNo(String orderNo) {
         PurchaseOrder order = repository.findByOrderNo(orderNo).orElse(null);
         if (order != null) {
-            Hibernate.initialize(order.getMedicine());
-            Hibernate.initialize(order.getOperator());
+            initializePurchaseOrderAssociations(order);
         }
         return order;
     }
@@ -62,8 +80,7 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
     public PurchaseOrder findById(Long id) {
         PurchaseOrder order = repository.findById(id).orElse(null);
         if (order != null) {
-            Hibernate.initialize(order.getMedicine());
-            Hibernate.initialize(order.getOperator());
+            initializePurchaseOrderAssociations(order);
         }
         return order;
     }
@@ -73,10 +90,7 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
     public List<PurchaseOrder> findAll() {
         List<PurchaseOrder> orders = repository.findAll();
         if (!orders.isEmpty()) {
-            orders.forEach(order -> {
-                Hibernate.initialize(order.getMedicine());
-                Hibernate.initialize(order.getOperator());
-            });
+            orders.forEach(this::initializePurchaseOrderAssociations);
         }
         return orders;
     }
@@ -86,10 +100,7 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
     public Page<PurchaseOrder> findAll(Pageable pageable) {
         Page<PurchaseOrder> page = repository.findAll(pageable);
         if (page.hasContent()) {
-            page.getContent().forEach(order -> {
-                Hibernate.initialize(order.getMedicine());
-                Hibernate.initialize(order.getOperator());
-            });
+            page.getContent().forEach(this::initializePurchaseOrderAssociations);
         }
         return page;
     }
@@ -99,8 +110,7 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
     public PurchaseOrder save(PurchaseOrder order) {
         PurchaseOrder savedOrder = repository.save(order);
         if (savedOrder != null) {
-            Hibernate.initialize(savedOrder.getMedicine());
-            Hibernate.initialize(savedOrder.getOperator());
+            initializePurchaseOrderAssociations(savedOrder);
         }
         return savedOrder;
     }
@@ -110,8 +120,7 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
     public PurchaseOrder update(PurchaseOrder order) {
         PurchaseOrder updatedOrder = repository.save(order);
         if (updatedOrder != null) {
-            Hibernate.initialize(updatedOrder.getMedicine());
-            Hibernate.initialize(updatedOrder.getOperator());
+            initializePurchaseOrderAssociations(updatedOrder);
         }
         return updatedOrder;
     }
@@ -121,10 +130,7 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
     public List<PurchaseOrder> saveAll(List<PurchaseOrder> orders) {
         List<PurchaseOrder> savedOrders = repository.saveAll(orders);
         if (!savedOrders.isEmpty()) {
-            savedOrders.forEach(order -> {
-                Hibernate.initialize(order.getMedicine());
-                Hibernate.initialize(order.getOperator());
-            });
+            savedOrders.forEach(this::initializePurchaseOrderAssociations);
         }
         return savedOrders;
     }
@@ -582,9 +588,44 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
         List<Object[]> results = repository.findSupplierPurchaseStatistics();
         List<Map<String, Object>> supplierStats = results.stream().map(result -> {
             Map<String, Object> stats = new HashMap<>();
-            stats.put("supplier", result[0]);
-            stats.put("orderCount", result[1]);
-            stats.put("totalAmount", result[2]);
+            stats.put("supplier", result[0].toString());
+            
+            Object countObj = result[1];
+            Long count;
+            if (countObj instanceof Long) {
+                count = (Long) countObj;
+            } else if (countObj instanceof Integer) {
+                count = ((Integer) countObj).longValue();
+            } else if (countObj instanceof BigDecimal) {
+                count = ((BigDecimal) countObj).longValue();
+            } else {
+                try {
+                    count = Long.parseLong(countObj.toString());
+                } catch (NumberFormatException e) {
+                    count = 0L;
+                }
+            }
+            stats.put("orderCount", count);
+            
+            Object amountObj = result[2];
+            Double amount;
+            if (amountObj instanceof BigDecimal) {
+                amount = ((BigDecimal) amountObj).doubleValue();
+            } else if (amountObj instanceof Long) {
+                amount = ((Long) amountObj).doubleValue();
+            } else if (amountObj instanceof Integer) {
+                amount = ((Integer) amountObj).doubleValue();
+            } else if (amountObj instanceof Double) {
+                amount = (Double) amountObj;
+            } else {
+                try {
+                    amount = Double.parseDouble(amountObj.toString());
+                } catch (NumberFormatException e) {
+                    amount = 0.0;
+                }
+            }
+            stats.put("totalAmount", amount);
+            
             return stats;
         }).collect(Collectors.toList());
 

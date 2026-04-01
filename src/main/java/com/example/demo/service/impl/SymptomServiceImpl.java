@@ -220,7 +220,21 @@ public class SymptomServiceImpl extends BaseServiceImpl<Symptom, Integer, Sympto
         List<Object[]> results = repository.findMostCommonSymptoms(start, end, pageable);
         List<Symptom> commonSymptoms = results.stream()
                 .map(result -> {
-                    Integer symptomId = (Integer) result[0];
+                    Object symptomIdObj = result[0];
+                    Integer symptomId;
+                    if (symptomIdObj instanceof Integer) {
+                        symptomId = (Integer) symptomIdObj;
+                    } else if (symptomIdObj instanceof Long) {
+                        symptomId = ((Long) symptomIdObj).intValue();
+                    } else if (symptomIdObj instanceof BigDecimal) {
+                        symptomId = ((BigDecimal) symptomIdObj).intValue();
+                    } else {
+                        try {
+                            symptomId = Integer.parseInt(symptomIdObj.toString());
+                        } catch (NumberFormatException e) {
+                            return null;
+                        }
+                    }
                     return repository.findById(symptomId).orElse(null);
                 })
                 .filter(Objects::nonNull)

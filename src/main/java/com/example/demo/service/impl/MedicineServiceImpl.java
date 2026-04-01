@@ -302,7 +302,6 @@ public class MedicineServiceImpl extends BaseServiceImpl<Medicine, Long, Medicin
                 .filter(medicine -> {
                     Object stockObj = repository.sumCurrentStockByMedicineId(medicine.getId());
                     Integer stock = stockObj != null ? (stockObj instanceof Long ? ((Long)stockObj).intValue() : stockObj instanceof Integer ? (Integer)stockObj : 0) : 0;
-                    if (stock == null) return false;
                     // 获取药品的库存记录，计算最小预警阈值
                     List<Stock> stocks = repository.findStocksByMedicineId(medicine.getId());
                     if (stocks.isEmpty()) return false;

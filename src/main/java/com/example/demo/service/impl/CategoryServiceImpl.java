@@ -25,15 +25,28 @@ public class CategoryServiceImpl extends BaseServiceImpl<Category, Long, Categor
         super(repository);
     }
 
+    private void initializeMedicineAssociations(Medicine medicine) {
+        if (medicine != null) {
+            Hibernate.initialize(medicine.getCategory());
+            Hibernate.initialize(medicine.getStocks());
+            Hibernate.initialize(medicine.getSaleRecords());
+            Hibernate.initialize(medicine.getPurchaseOrders());
+            Hibernate.initialize(medicine.getSymptoms());
+        }
+    }
+
+    private void initializeCategoryAssociations(Category category) {
+        if (category != null && category.getMedicines() != null) {
+            Hibernate.initialize(category.getMedicines());
+            category.getMedicines().forEach(this::initializeMedicineAssociations);
+        }
+    }
+
     @Override
     public List<Category> findByParentId(Long parentId) {
         List<Category> categories = repository.findByParentId(parentId);
         if (!categories.isEmpty()) {
-            categories.forEach(category -> {
-                if (category.getMedicines() != null) {
-                    Hibernate.initialize(category.getMedicines());
-                }
-            });
+            categories.forEach(this::initializeCategoryAssociations);
         }
         return categories;
     }
@@ -42,11 +55,7 @@ public class CategoryServiceImpl extends BaseServiceImpl<Category, Long, Categor
     public List<Category> findByLevel(Integer level) {
         List<Category> categories = repository.findByLevel(level);
         if (!categories.isEmpty()) {
-            categories.forEach(category -> {
-                if (category.getMedicines() != null) {
-                    Hibernate.initialize(category.getMedicines());
-                }
-            });
+            categories.forEach(this::initializeCategoryAssociations);
         }
         return categories;
     }
@@ -55,11 +64,7 @@ public class CategoryServiceImpl extends BaseServiceImpl<Category, Long, Categor
     public List<Category> findRootCategories() {
         List<Category> categories = repository.findByParentIdAndStatusOrderBySortAsc(0L, 1);
         if (!categories.isEmpty()) {
-            categories.forEach(category -> {
-                if (category.getMedicines() != null) {
-                    Hibernate.initialize(category.getMedicines());
-                }
-            });
+            categories.forEach(this::initializeCategoryAssociations);
         }
         return categories;
     }
@@ -68,9 +73,7 @@ public class CategoryServiceImpl extends BaseServiceImpl<Category, Long, Categor
     @Transactional(readOnly = true)
     public Category findById(Long id) {
         Category category = repository.findById(id).orElse(null);
-        if (category != null && category.getMedicines() != null) {
-            Hibernate.initialize(category.getMedicines());
-        }
+        initializeCategoryAssociations(category);
         return category;
     }
 
@@ -79,11 +82,7 @@ public class CategoryServiceImpl extends BaseServiceImpl<Category, Long, Categor
     public List<Category> findAll() {
         List<Category> categories = repository.findAll();
         if (!categories.isEmpty()) {
-            categories.forEach(category -> {
-                if (category.getMedicines() != null) {
-                    Hibernate.initialize(category.getMedicines());
-                }
-            });
+            categories.forEach(this::initializeCategoryAssociations);
         }
         return categories;
     }
@@ -93,11 +92,7 @@ public class CategoryServiceImpl extends BaseServiceImpl<Category, Long, Categor
     public Page<Category> findAll(Pageable pageable) {
         Page<Category> page = repository.findAll(pageable);
         if (page.hasContent()) {
-            page.getContent().forEach(category -> {
-                if (category.getMedicines() != null) {
-                    Hibernate.initialize(category.getMedicines());
-                }
-            });
+            page.getContent().forEach(this::initializeCategoryAssociations);
         }
         return page;
     }
@@ -106,9 +101,7 @@ public class CategoryServiceImpl extends BaseServiceImpl<Category, Long, Categor
     @Transactional
     public Category save(Category category) {
         Category savedCategory = repository.save(category);
-        if (savedCategory != null && savedCategory.getMedicines() != null) {
-            Hibernate.initialize(savedCategory.getMedicines());
-        }
+        initializeCategoryAssociations(savedCategory);
         return savedCategory;
     }
 
@@ -116,9 +109,7 @@ public class CategoryServiceImpl extends BaseServiceImpl<Category, Long, Categor
     @Transactional
     public Category update(Category category) {
         Category updatedCategory = repository.save(category);
-        if (updatedCategory != null && updatedCategory.getMedicines() != null) {
-            Hibernate.initialize(updatedCategory.getMedicines());
-        }
+        initializeCategoryAssociations(updatedCategory);
         return updatedCategory;
     }
 
@@ -127,11 +118,7 @@ public class CategoryServiceImpl extends BaseServiceImpl<Category, Long, Categor
     public List<Category> saveAll(List<Category> categories) {
         List<Category> savedCategories = repository.saveAll(categories);
         if (!savedCategories.isEmpty()) {
-            savedCategories.forEach(category -> {
-                if (category.getMedicines() != null) {
-                    Hibernate.initialize(category.getMedicines());
-                }
-            });
+            savedCategories.forEach(this::initializeCategoryAssociations);
         }
         return savedCategories;
     }

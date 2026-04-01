@@ -8,6 +8,7 @@ import org.hibernate.annotations.DynamicUpdate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -109,12 +110,12 @@ public class Medicine {
     @OneToMany(mappedBy = "medicine", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"medicine", "operator"})
     @JsonView(Views.Detail.class)
-    private List<SaleRecord> saleRecords;//销售记录
+    private List<SaleRecord> saleRecords = new ArrayList<>();//销售记录
 
     @OneToMany(mappedBy = "medicine", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"medicine", "operator"})
     @JsonView(Views.Detail.class)
-    private List<PurchaseOrder> purchaseOrders;//采购订单
+    private List<PurchaseOrder> purchaseOrders = new ArrayList<>();//采购订单
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -124,5 +125,5 @@ public class Medicine {
     )
     @JsonIgnoreProperties({"description"})
     @JsonView(Views.Detail.class)
-    private List<Symptom> symptoms;//适应症状
+    private List<Symptom> symptoms = new ArrayList<>();//适应症状
 }

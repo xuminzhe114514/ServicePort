@@ -858,7 +858,6 @@ public class StockController {
             Pageable pageable = PageRequest.of(page, size, Sort.by("updateTime").descending());
             Page<Stock> stockPage = stockService.findAll(pageable);
 
-
             List<Map<String, Object>> transactions = stockPage.getContent().stream()
                     .map(stock -> {
                         Map<String, Object> transaction = new HashMap<>();

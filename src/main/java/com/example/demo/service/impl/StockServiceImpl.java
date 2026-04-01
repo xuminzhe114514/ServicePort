@@ -33,12 +33,23 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
     @Autowired
     private MedicineRepository medicineRepository;
 
+    private void initializeMedicineAssociations(Medicine medicine) {
+        if (medicine != null) {
+            Hibernate.initialize(medicine.getCategory());
+            Hibernate.initialize(medicine.getStocks());
+            Hibernate.initialize(medicine.getSaleRecords());
+            Hibernate.initialize(medicine.getPurchaseOrders());
+            Hibernate.initialize(medicine.getSymptoms());
+        }
+    }
+
     @Override
     @Transactional(readOnly = true)
     public Stock findById(Long id) {
         Stock stock = repository.findById(id).orElse(null);
         if (stock != null) {
             Hibernate.initialize(stock.getMedicine());
+            initializeMedicineAssociations(stock.getMedicine());
         }
         return stock;
     }
@@ -50,6 +61,7 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         if (!stocks.isEmpty()) {
             stocks.forEach(stock -> {
                 Hibernate.initialize(stock.getMedicine());
+                initializeMedicineAssociations(stock.getMedicine());
             });
         }
         return stocks;
@@ -62,6 +74,7 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         if (page.hasContent()) {
             page.getContent().forEach(stock -> {
                 Hibernate.initialize(stock.getMedicine());
+                initializeMedicineAssociations(stock.getMedicine());
             });
         }
         return page;
@@ -73,6 +86,7 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         Stock savedStock = repository.save(stock);
         if (savedStock != null) {
             Hibernate.initialize(savedStock.getMedicine());
+            initializeMedicineAssociations(savedStock.getMedicine());
         }
         return savedStock;
     }
@@ -83,6 +97,7 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         Stock updatedStock = repository.save(stock);
         if (updatedStock != null) {
             Hibernate.initialize(updatedStock.getMedicine());
+            initializeMedicineAssociations(updatedStock.getMedicine());
         }
         return updatedStock;
     }
@@ -94,6 +109,7 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         if (!savedStocks.isEmpty()) {
             savedStocks.forEach(stock -> {
                 Hibernate.initialize(stock.getMedicine());
+                initializeMedicineAssociations(stock.getMedicine());
             });
         }
         return savedStocks;
@@ -447,7 +463,7 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         LocalDateTime endDate = LocalDateTime.now();
         LocalDateTime startDate;
     
-        // 根据period参数设置开始日期
+        // 根据 period 参数设置开始日期
         switch (period) {
             case "week":
                 startDate = endDate.minusWeeks(1);
@@ -472,10 +488,29 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         return turnoverData.stream()
                 .mapToDouble(obj -> {
                     if (obj.length > 3) {
-                        Double turnoverRate = (Double) obj[3];
-                        return turnoverRate != null ? turnoverRate : 0;
+                        Object rateObj = obj[3];
+                        if (rateObj == null) {
+                            return 0.0;
+                        }
+                        Double turnoverRate;
+                        if (rateObj instanceof java.math.BigDecimal) {
+                            turnoverRate = ((java.math.BigDecimal) rateObj).doubleValue();
+                        } else if (rateObj instanceof Long) {
+                            turnoverRate = ((Long) rateObj).doubleValue();
+                        } else if (rateObj instanceof Integer) {
+                            turnoverRate = ((Integer) rateObj).doubleValue();
+                        } else if (rateObj instanceof Double) {
+                            turnoverRate = (Double) rateObj;
+                        } else {
+                            try {
+                                turnoverRate = Double.parseDouble(rateObj.toString());
+                            } catch (NumberFormatException e) {
+                                turnoverRate = 0.0;
+                            }
+                        }
+                        return turnoverRate != null ? turnoverRate : 0.0;
                     }
-                    return 0;
+                    return 0.0;
                 })
                 .average()
                 .orElse(0.0);
@@ -493,7 +528,23 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         Map<String, Object> valueByCategory = new HashMap<>();
         results.forEach(result -> {
             String categoryName = result[0].toString();
-            Double value = Double.parseDouble(result[1].toString());
+            Object valueObj = result[1];
+            Double value;
+            if (valueObj instanceof BigDecimal) {
+                value = ((BigDecimal) valueObj).doubleValue();
+            } else if (valueObj instanceof Long) {
+                value = ((Long) valueObj).doubleValue();
+            } else if (valueObj instanceof Integer) {
+                value = ((Integer) valueObj).doubleValue();
+            } else if (valueObj instanceof Double) {
+                value = (Double) valueObj;
+            } else {
+                try {
+                    value = Double.parseDouble(valueObj.toString());
+                } catch (NumberFormatException e) {
+                    value = 0.0;
+                }
+            }
             valueByCategory.put(categoryName, value);
         });
         return valueByCategory;

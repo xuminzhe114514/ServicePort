@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -35,13 +34,31 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
     @Autowired
     private UserService userService;
 
-    @Override
-    public SaleRecord findByRecordNo(String recordNo) {
-        SaleRecord record = repository.findByRecordNo(recordNo).orElse(null);
+    private void initializeSaleRecordAssociations(SaleRecord record) {
         if (record != null) {
             Hibernate.initialize(record.getMedicine());
             Hibernate.initialize(record.getOperator());
             Hibernate.initialize(record.getSymptom());
+            
+            if (record.getMedicine() != null) {
+                Hibernate.initialize(record.getMedicine().getCategory());
+                Hibernate.initialize(record.getMedicine().getStocks());
+                Hibernate.initialize(record.getMedicine().getSaleRecords());
+                Hibernate.initialize(record.getMedicine().getPurchaseOrders());
+                Hibernate.initialize(record.getMedicine().getSymptoms());
+            }
+            
+            if (record.getOperator() != null) {
+                Hibernate.initialize(record.getOperator());
+            }
+        }
+    }
+
+    @Override
+    public SaleRecord findByRecordNo(String recordNo) {
+        SaleRecord record = repository.findByRecordNo(recordNo).orElse(null);
+        if (record != null) {
+            initializeSaleRecordAssociations(record);
         }
         return record;
     }
@@ -51,9 +68,7 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
     public SaleRecord findById(Long id) {
         SaleRecord record = repository.findById(id).orElse(null);
         if (record != null) {
-            Hibernate.initialize(record.getMedicine());
-            Hibernate.initialize(record.getOperator());
-            Hibernate.initialize(record.getSymptom());
+            initializeSaleRecordAssociations(record);
         }
         return record;
     }
@@ -63,11 +78,7 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
     public List<SaleRecord> findAll() {
         List<SaleRecord> records = repository.findAll();
         if (!records.isEmpty()) {
-            records.forEach(record -> {
-                Hibernate.initialize(record.getMedicine());
-                Hibernate.initialize(record.getOperator());
-                Hibernate.initialize(record.getSymptom());
-            });
+            records.forEach(this::initializeSaleRecordAssociations);
         }
         return records;
     }
@@ -77,11 +88,7 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
     public Page<SaleRecord> findAll(Pageable pageable) {
         Page<SaleRecord> page = repository.findAll(pageable);
         if (page.hasContent()) {
-            page.getContent().forEach(record -> {
-                Hibernate.initialize(record.getMedicine());
-                Hibernate.initialize(record.getOperator());
-                Hibernate.initialize(record.getSymptom());
-            });
+            page.getContent().forEach(this::initializeSaleRecordAssociations);
         }
         return page;
     }
@@ -91,9 +98,7 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
     public SaleRecord save(SaleRecord record) {
         SaleRecord savedRecord = repository.save(record);
         if (savedRecord != null) {
-            Hibernate.initialize(savedRecord.getMedicine());
-            Hibernate.initialize(savedRecord.getOperator());
-            Hibernate.initialize(savedRecord.getSymptom());
+            initializeSaleRecordAssociations(savedRecord);
         }
         return savedRecord;
     }
@@ -103,9 +108,7 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
     public SaleRecord update(SaleRecord record) {
         SaleRecord updatedRecord = repository.save(record);
         if (updatedRecord != null) {
-            Hibernate.initialize(updatedRecord.getMedicine());
-            Hibernate.initialize(updatedRecord.getOperator());
-            Hibernate.initialize(updatedRecord.getSymptom());
+            initializeSaleRecordAssociations(updatedRecord);
         }
         return updatedRecord;
     }
@@ -115,11 +118,7 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
     public List<SaleRecord> saveAll(List<SaleRecord> records) {
         List<SaleRecord> savedRecords = repository.saveAll(records);
         if (!savedRecords.isEmpty()) {
-            savedRecords.forEach(record -> {
-                Hibernate.initialize(record.getMedicine());
-                Hibernate.initialize(record.getOperator());
-                Hibernate.initialize(record.getSymptom());
-            });
+            savedRecords.forEach(this::initializeSaleRecordAssociations);
         }
         return savedRecords;
     }
@@ -128,11 +127,7 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
     public List<SaleRecord> findBySaleTimeBetween(LocalDateTime startTime, LocalDateTime endTime) {
         List<SaleRecord> records = repository.findBySaleTimeBetween(startTime, endTime);
         if (!records.isEmpty()) {
-            records.forEach(record -> {
-                Hibernate.initialize(record.getMedicine());
-                Hibernate.initialize(record.getOperator());
-                Hibernate.initialize(record.getSymptom());
-            });
+            records.forEach(this::initializeSaleRecordAssociations);
         }
         return records;
     }
@@ -141,11 +136,7 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
     public List<SaleRecord> findByMedicineId(Long medicineId) {
         List<SaleRecord> records = repository.findByMedicineId(medicineId);
         if (!records.isEmpty()) {
-            records.forEach(record -> {
-                Hibernate.initialize(record.getMedicine());
-                Hibernate.initialize(record.getOperator());
-                Hibernate.initialize(record.getSymptom());
-            });
+            records.forEach(this::initializeSaleRecordAssociations);
         }
         return records;
     }
@@ -154,11 +145,7 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
     public List<SaleRecord> findByOperatorId(Long operatorId) {
         List<SaleRecord> records = repository.findByOperatorId(operatorId);
         if (!records.isEmpty()) {
-            records.forEach(record -> {
-                Hibernate.initialize(record.getMedicine());
-                Hibernate.initialize(record.getOperator());
-                Hibernate.initialize(record.getSymptom());
-            });
+            records.forEach(this::initializeSaleRecordAssociations);
         }
         return records;
     }
@@ -184,9 +171,50 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
 
         return results.stream().map(result -> {
             Map<String, Object> map = new HashMap<>();
-            map.put("date", (((Date) result[0]).toLocalDate()).format(formatter));
-            map.put("medicineId", result[1]);
-            map.put("totalQuantity", result[2]);
+            
+            Object dateObj = result[0];
+            if (dateObj instanceof java.sql.Date) {
+                map.put("date", ((java.sql.Date) dateObj).toLocalDate().format(formatter));
+            } else if (dateObj instanceof java.util.Date) {
+                map.put("date", ((java.util.Date) dateObj).toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate().format(formatter));
+            } else {
+                map.put("date", dateObj != null ? dateObj.toString() : null);
+            }
+            
+            Object medicineIdObj = result[1];
+            Long medicineId;
+            if (medicineIdObj instanceof Long) {
+                medicineId = (Long) medicineIdObj;
+            } else if (medicineIdObj instanceof Integer) {
+                medicineId = ((Integer) medicineIdObj).longValue();
+            } else if (medicineIdObj instanceof BigDecimal) {
+                medicineId = ((BigDecimal) medicineIdObj).longValue();
+            } else {
+                try {
+                    medicineId = Long.parseLong(medicineIdObj.toString());
+                } catch (NumberFormatException e) {
+                    medicineId = 0L;
+                }
+            }
+            map.put("medicineId", medicineId);
+            
+            Object quantityObj = result[2];
+            Integer quantity;
+            if (quantityObj instanceof Long) {
+                quantity = ((Long) quantityObj).intValue();
+            } else if (quantityObj instanceof Integer) {
+                quantity = (Integer) quantityObj;
+            } else if (quantityObj instanceof BigDecimal) {
+                quantity = ((BigDecimal) quantityObj).intValue();
+            } else {
+                try {
+                    quantity = Integer.parseInt(quantityObj.toString());
+                } catch (NumberFormatException e) {
+                    quantity = 0;
+                }
+            }
+            map.put("totalQuantity", quantity);
+            
             return map;
         }).collect(Collectors.toList());
     }
@@ -204,8 +232,41 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
 
         return results.stream().map(result -> {
             Map<String, Object> map = new HashMap<>();
-            map.put("medicineId", result[0]);
-            map.put("totalQuantity", result[1]);
+            
+            Object medicineIdObj = result[0];
+            Long medicineId;
+            if (medicineIdObj instanceof Long) {
+                medicineId = (Long) medicineIdObj;
+            } else if (medicineIdObj instanceof Integer) {
+                medicineId = ((Integer) medicineIdObj).longValue();
+            } else if (medicineIdObj instanceof BigDecimal) {
+                medicineId = ((BigDecimal) medicineIdObj).longValue();
+            } else {
+                try {
+                    medicineId = Long.parseLong(medicineIdObj.toString());
+                } catch (NumberFormatException e) {
+                    medicineId = 0L;
+                }
+            }
+            map.put("medicineId", medicineId);
+            
+            Object quantityObj = result[1];
+            Long quantity;
+            if (quantityObj instanceof Long) {
+                quantity = (Long) quantityObj;
+            } else if (quantityObj instanceof Integer) {
+                quantity = ((Integer) quantityObj).longValue();
+            } else if (quantityObj instanceof BigDecimal) {
+                quantity = ((BigDecimal) quantityObj).longValue();
+            } else {
+                try {
+                    quantity = Long.parseLong(quantityObj.toString());
+                } catch (NumberFormatException e) {
+                    quantity = 0L;
+                }
+            }
+            map.put("totalQuantity", quantity);
+            
             return map;
         }).collect(Collectors.toList());
     }
@@ -229,9 +290,7 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
 
         SaleRecord savedRecord = repository.save(saleRecord);
         if (savedRecord != null) {
-            Hibernate.initialize(savedRecord.getMedicine());
-            Hibernate.initialize(savedRecord.getOperator());
-            Hibernate.initialize(savedRecord.getSymptom());
+            initializeSaleRecordAssociations(savedRecord);
         }
         return savedRecord;
     }
@@ -252,11 +311,7 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
         }
 
         if (!content.isEmpty()) {
-            content.forEach(record -> {
-                Hibernate.initialize(record.getMedicine());
-                Hibernate.initialize(record.getOperator());
-                Hibernate.initialize(record.getSymptom());
-            });
+            content.forEach(this::initializeSaleRecordAssociations);
         }
 
         return new PageImpl<>(content, pageable, total);
@@ -311,8 +366,41 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
         List<Map<String, Object>> symptomStats = results.stream().map(result -> {
             Map<String, Object> map = new HashMap<>();
             map.put("symptom", result[0]);
-            map.put("totalQuantity", result[1]);
-            map.put("totalAmount", result[2]);
+            
+            Object quantityObj = result[1];
+            Integer quantity;
+            if (quantityObj instanceof Long) {
+                quantity = ((Long) quantityObj).intValue();
+            } else if (quantityObj instanceof Integer) {
+                quantity = (Integer) quantityObj;
+            } else {
+                try {
+                    quantity = Integer.parseInt(quantityObj.toString());
+                } catch (NumberFormatException e) {
+                    quantity = 0;
+                }
+            }
+            map.put("totalQuantity", quantity);
+            
+            Object amountObj = result[2];
+            Double amount;
+            if (amountObj instanceof BigDecimal) {
+                amount = ((BigDecimal) amountObj).doubleValue();
+            } else if (amountObj instanceof Long) {
+                amount = ((Long) amountObj).doubleValue();
+            } else if (amountObj instanceof Integer) {
+                amount = ((Integer) amountObj).doubleValue();
+            } else if (amountObj instanceof Double) {
+                amount = (Double) amountObj;
+            } else {
+                try {
+                    amount = Double.parseDouble(amountObj.toString());
+                } catch (NumberFormatException e) {
+                    amount = 0.0;
+                }
+            }
+            map.put("totalAmount", amount);
+            
             return map;
         }).collect(Collectors.toList());
 
@@ -338,8 +426,41 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
         results.forEach(result -> {
             String operatorName = result[1].toString();
             Map<String, Object> stats = new HashMap<>();
-            stats.put("recordCount", result[2]);
-            stats.put("totalAmount", result[3]);
+            
+            Object countObj = result[2];
+            Long count;
+            if (countObj instanceof Long) {
+                count = (Long) countObj;
+            } else if (countObj instanceof Integer) {
+                count = ((Integer) countObj).longValue();
+            } else {
+                try {
+                    count = Long.parseLong(countObj.toString());
+                } catch (NumberFormatException e) {
+                    count = 0L;
+                }
+            }
+            stats.put("recordCount", count);
+            
+            Object amountObj = result[3];
+            Double amount;
+            if (amountObj instanceof BigDecimal) {
+                amount = ((BigDecimal) amountObj).doubleValue();
+            } else if (amountObj instanceof Long) {
+                amount = ((Long) amountObj).doubleValue();
+            } else if (amountObj instanceof Integer) {
+                amount = ((Integer) amountObj).doubleValue();
+            } else if (amountObj instanceof Double) {
+                amount = (Double) amountObj;
+            } else {
+                try {
+                    amount = Double.parseDouble(amountObj.toString());
+                } catch (NumberFormatException e) {
+                    amount = 0.0;
+                }
+            }
+            stats.put("totalAmount", amount);
+            
             performance.put(operatorName, stats);
         });
 
@@ -354,8 +475,35 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
         List<Object[]> results = repository.findDailySalesAmount(startDate, endDate);
         List<Map<String, Object>> trendData = results.stream().map(result -> {
             Map<String, Object> map = new HashMap<>();
-            map.put("date", result[0]);
-            map.put("amount", result[1]);
+            
+            Object dateObj = result[0];
+            if (dateObj instanceof java.sql.Date) {
+                map.put("date", ((java.sql.Date) dateObj).toLocalDate());
+            } else if (dateObj instanceof java.util.Date) {
+                map.put("date", ((java.util.Date) dateObj).toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate());
+            } else {
+                map.put("date", dateObj);
+            }
+            
+            Object amountObj = result[1];
+            Double amount;
+            if (amountObj instanceof BigDecimal) {
+                amount = ((BigDecimal) amountObj).doubleValue();
+            } else if (amountObj instanceof Long) {
+                amount = ((Long) amountObj).doubleValue();
+            } else if (amountObj instanceof Integer) {
+                amount = ((Integer) amountObj).doubleValue();
+            } else if (amountObj instanceof Double) {
+                amount = (Double) amountObj;
+            } else {
+                try {
+                    amount = Double.parseDouble(amountObj.toString());
+                } catch (NumberFormatException e) {
+                    amount = 0.0;
+                }
+            }
+            map.put("amount", amount);
+            
             return map;
         }).collect(Collectors.toList());
 
@@ -421,11 +569,7 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
         }
 
         if (!content.isEmpty()) {
-            content.forEach(record -> {
-                Hibernate.initialize(record.getMedicine());
-                Hibernate.initialize(record.getOperator());
-                Hibernate.initialize(record.getSymptom());
-            });
+            content.forEach(this::initializeSaleRecordAssociations);
         }
 
         return new PageImpl<>(content, pageable, total);

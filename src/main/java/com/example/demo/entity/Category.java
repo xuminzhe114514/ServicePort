@@ -36,7 +36,7 @@ public class Category {
 
     @Column(name = "description", length = 500)
     @JsonView(Views.Detail.class)
-    private String description;//分类描述
+    private String description = "";//分类描述
 
     @Column(name = "sort")
     @JsonView(Views.Internal.class)

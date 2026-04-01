@@ -1,9 +1,5 @@
 package com.example.demo.views;
 
-/**
- * JSON视图定义类
- * 用于控制不同API接口返回不同的字段集合
- */
 public class Views {
 
     public interface Public {}
