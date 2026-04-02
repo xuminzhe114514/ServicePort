@@ -14,7 +14,6 @@ public class LogSystemValidator implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         logger.info("========================================");
-        logger.info("              日志系统验证                 ");
         logger.info("========================================");
         logger.info("日志文件存储路径：d:/JavaProject/demo/logs");
         logger.debug("【DEBUG】调试级别日志 - 验证成功");
@@ -27,7 +26,6 @@ public class LogSystemValidator implements CommandLineRunner {
         LogUtil.logSql(logger, "SELECT * FROM users WHERE id = ?", 1);
         
         logger.info("========================================");
-        logger.info("                 验证完成                 ");
         logger.info("========================================");
         logger.info("日志文件说明:");
         logger.info("  - pharmacy-inventory-info.log: INFO 级别日志");
