@@ -29,5 +29,6 @@ public interface MedicineService extends BaseService<Medicine, Long> {
     Page<Medicine> findExpiringMedicines(int daysThreshold, Pageable pageable);
     Page<Medicine> findByStorageRequirement(Integer storageRequirement, Pageable pageable);
     Page<Medicine> searchMedicinesWithPagination(String keyword, Pageable pageable);
+    Page<Medicine> findByMultipleConditions(Integer status, Long categoryId, String keyword, Pageable pageable);
 
 }

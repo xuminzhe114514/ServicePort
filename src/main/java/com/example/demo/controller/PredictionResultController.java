@@ -61,13 +61,17 @@ public class PredictionResultController {
 
             Page<PredictionResult> predictionPage = predictionResultService.findAll(pageable);
 
+            // 批量实时计算过期预测记录的准确率
+            List<PredictionResult> predictions = predictionPage.getContent();
+            predictionResultService.refreshAccuracyForPredictions(predictions);
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("currentPage", predictionPage.getNumber());
             response.put("totalItems", predictionPage.getTotalElements());
             response.put("totalPages", predictionPage.getTotalPages());
 
-            List<Map<String, Object>> predictionList = predictionPage.getContent().stream()
+            List<Map<String, Object>> predictionList = predictions.stream()
                     .map(this::createPredictionResponse)
                     .toList();
             response.put("data", predictionList);
@@ -232,6 +236,9 @@ public class PredictionResultController {
             }
 
             List<PredictionResult> pageContent = predictions.subList(start, end);
+            
+            // 实时计算过期预测的准确率
+            predictionResultService.refreshAccuracyForPredictions(pageContent);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -283,6 +290,9 @@ public class PredictionResultController {
             }
 
             List<PredictionResult> pageContent = predictions.subList(start, end);
+            
+            // 实时计算过期预测的准确率
+            predictionResultService.refreshAccuracyForPredictions(pageContent);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -335,6 +345,9 @@ public class PredictionResultController {
             }
 
             List<PredictionResult> pageContent = predictions.subList(start, end);
+            
+            // 实时计算过期预测的准确率
+            predictionResultService.refreshAccuracyForPredictions(pageContent);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -803,11 +816,9 @@ public class PredictionResultController {
             Map<String, Object> result = predictionResultService.calculateABCClassification(
                     medicineIds != null ? medicineIds : List.of()
             );
-
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("data", result);
-
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();

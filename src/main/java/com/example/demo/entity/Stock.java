@@ -34,12 +34,12 @@ public class Stock {
     @JsonFormat(pattern = "yyyy-MM-dd")
     @Column(name = "production_date")
     @JsonView(Views.Detail.class)
-    private LocalDate productionDate;//生产日期
+    private LocalDate productionDate = LocalDate.now();//生产日期
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     @Column(name = "expiration_date")
     @JsonView(Views.Detail.class)
-    private LocalDate expirationDate;//有效期至
+    private LocalDate expirationDate = LocalDate.now().plusYears(1);//有效期至
 
     @Column(name = "quantity", nullable = false)
     @JsonView(Views.Public.class)
@@ -69,15 +69,49 @@ public class Stock {
 
     @Column(name = "minimum_order_quantity")
     @JsonView(Views.Detail.class)
-    private Integer minimumOrderQuantity;//最小订购数量
+    private Integer minimumOrderQuantity = 20;//最小订购数量
 
     @Column(name = "lead_time_days")
     @JsonView(Views.Detail.class)
-    private Integer leadTimeDays;//采购提前期（天）
+    private Integer leadTimeDays = 7;//采购提前期（天）
 
     @Column(name = "reorder_point")
     @JsonView(Views.Detail.class)
-    private Integer reorderPoint;//再订货点
+    private Integer reorderPoint = 10;//再订货点
+
+    @PrePersist
+    public void prePersist() {
+        if (this.status == null) {
+            this.status = 1;
+        }
+        if (this.quantity == null) {
+            this.quantity = 0;
+        }
+        if (this.warningQuantity == null) {
+            this.warningQuantity = 10;
+        }
+        if (this.minimumOrderQuantity == null) {
+            this.minimumOrderQuantity = 20;
+        }
+        if (this.leadTimeDays == null) {
+            this.leadTimeDays = 7;
+        }
+        if (this.reorderPoint == null) {
+            this.reorderPoint = 10;
+        }
+        if (this.productionDate == null) {
+            this.productionDate = LocalDate.now();
+        }
+        if (this.expirationDate == null) {
+            this.expirationDate = LocalDate.now().plusYears(1);
+        }
+        if (this.createTime == null) {
+            this.createTime = LocalDateTime.now();
+        }
+        if (this.updateTime == null) {
+            this.updateTime = LocalDateTime.now();
+        }
+    }
 
     @PreUpdate
     public void preUpdate() {

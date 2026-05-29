@@ -293,7 +293,6 @@ public class CategoryServiceImpl extends BaseServiceImpl<Category, Long, Categor
         super.delete(id);
     }
 
-    // 新增方法实现
     @Override
     public Page<Category> findActiveCategories(Pageable pageable) {
         List<Category> allCategories = repository.findByStatusOrderBySortAsc(1);
@@ -307,7 +306,6 @@ public class CategoryServiceImpl extends BaseServiceImpl<Category, Long, Categor
         } else {
             content = allCategories.subList(start, end);
         }
-
         Page<Category> page = new PageImpl<>(content, pageable, total);
         if (page.hasContent()) {
             page.getContent().forEach(category -> {
@@ -332,7 +330,6 @@ public class CategoryServiceImpl extends BaseServiceImpl<Category, Long, Categor
         } else {
             content = allCategories.subList(start, end);
         }
-
         Page<Category> page = new PageImpl<>(content, pageable, total);
         if (page.hasContent()) {
             page.getContent().forEach(category -> {
@@ -418,7 +415,6 @@ public class CategoryServiceImpl extends BaseServiceImpl<Category, Long, Categor
         stats.put("categoryName", category.getName());
         stats.put("categoryLevel", category.getLevel());
         stats.put("categoryStatus", category.getStatus());
-
         return stats;
     }
 }

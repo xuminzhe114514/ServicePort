@@ -4,6 +4,7 @@ import com.example.demo.views.Views;
 import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDateTime;
@@ -51,8 +52,31 @@ public class Category {
     @JsonView(Views.Admin.class)
     private LocalDateTime createTime = LocalDateTime.now();//创建时间
 
+    @PrePersist
+    public void prePersist() {
+        if (this.parentId == null) {
+            this.parentId = 0L;
+        }
+        if (this.level == null) {
+            this.level = 1;
+        }
+        if (this.description == null) {
+            this.description = "";
+        }
+        if (this.sort == null) {
+            this.sort = 0;
+        }
+        if (this.status == null) {
+            this.status = 1;
+        }
+        if (this.createTime == null) {
+            this.createTime = LocalDateTime.now();
+        }
+    }
+
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"category", "stocks", "saleRecords", "purchaseOrders", "predictionResults", "symptoms"})
     @JsonView(Views.Detail.class)
+    @ToString.Exclude
     private List<Medicine> medicines = new ArrayList<>();//关联药品列表
 }

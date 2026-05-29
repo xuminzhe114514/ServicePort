@@ -36,4 +36,7 @@ public interface StockService extends BaseService<Stock, Long> {
     Map<Long, Object> getStockInventoryReport();
     Page<Stock> findByStorageCondition(Integer condition, Pageable pageable);
     Page<Stock> findByShelfLocationContaining(String location, Pageable pageable);
+    Page<Stock> searchByKeyword(String keyword, Pageable pageable);
+    Page<Stock> findByMedicineName(String medicineName, Pageable pageable);
+    Page<Stock> findByMultipleConditions(String medicineName, String batchNumber, String shelfLocation, Integer status, Pageable pageable);
 }

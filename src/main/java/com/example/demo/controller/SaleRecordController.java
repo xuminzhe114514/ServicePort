@@ -1,10 +1,13 @@
 package com.example.demo.controller;
 
+import com.example.demo.entity.Medicine;
 import com.example.demo.entity.SaleRecord;
 import com.example.demo.entity.User;
+import com.example.demo.service.MedicineService;
 import com.example.demo.service.SaleRecordService;
 import com.example.demo.service.StockService;
 import com.example.demo.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,7 +19,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +31,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/sale-records")
 @CrossOrigin(origins = "*")
+@Slf4j
 public class SaleRecordController {
 
     @Autowired
@@ -36,6 +42,9 @@ public class SaleRecordController {
 
     @Autowired
     private StockService stockService;
+    
+    @Autowired
+    private MedicineService medicineService;
 
     @GetMapping("/test")
     public ResponseEntity<String> test() {
@@ -43,7 +52,7 @@ public class SaleRecordController {
     }
 
     /**
-     * 获取所有销售记录（分页）
+     * 获取所有销售记录（分页），支持关键词搜索
      * GET /api/sale-records
      */
     @GetMapping
@@ -51,13 +60,20 @@ public class SaleRecordController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "saleTime") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
+            @RequestParam(defaultValue = "desc") String direction,
+            @RequestParam(required = false) String keyword) {
         try {
             Sort sort = direction.equalsIgnoreCase("desc") ?
                     Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
             Pageable pageable = PageRequest.of(page, size, sort);
 
-            Page<SaleRecord> saleRecordPage = saleRecordService.findAll(pageable);
+            Page<SaleRecord> saleRecordPage;
+
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                saleRecordPage = saleRecordService.searchByKeyword(keyword.trim(), pageable);
+            } else {
+                saleRecordPage = saleRecordService.findAll(pageable);
+            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -75,6 +91,69 @@ public class SaleRecordController {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "获取销售记录失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 多条件联立查询销售记录
+     * GET /api/sale-records/search
+     */
+    @GetMapping("/search")
+    public ResponseEntity<Map<String, Object>> searchSaleRecords(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "saleTime") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            @RequestParam(required = false) Long operatorId,
+            @RequestParam(required = false) Integer symptomId,
+            @RequestParam(required = false) Long medicineId) {
+        try {
+            Sort sort = direction.equalsIgnoreCase("desc") ?
+                    Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+
+            LocalDateTime startDateTime = null;
+            LocalDateTime endDateTime = null;
+
+            if (startTime != null && !startTime.trim().isEmpty()) {
+                try {
+                    startDateTime = LocalDateTime.parse(startTime.trim(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                } catch (Exception e) {
+                    startDateTime = LocalDate.parse(startTime.trim()).atStartOfDay();
+                }
+            }
+
+            if (endTime != null && !endTime.trim().isEmpty()) {
+                try {
+                    endDateTime = LocalDateTime.parse(endTime.trim(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                } catch (Exception e) {
+                    endDateTime = LocalDate.parse(endTime.trim()).atTime(23, 59, 59);
+                }
+            }
+
+            Page<SaleRecord> saleRecordPage = saleRecordService.findByMultipleConditions(
+                    keyword, startDateTime, endDateTime, operatorId, symptomId, medicineId, pageable);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("currentPage", saleRecordPage.getNumber());
+            response.put("totalItems", saleRecordPage.getTotalElements());
+            response.put("totalPages", saleRecordPage.getTotalPages());
+
+            List<Map<String, Object>> recordList = saleRecordPage.getContent().stream()
+                    .map(this::createSaleRecordResponse)
+                    .collect(Collectors.toList());
+            response.put("data", recordList);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "查询销售记录失败: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -142,9 +221,28 @@ public class SaleRecordController {
     @PostMapping
     public ResponseEntity<Map<String, Object>> createSaleRecord(@RequestBody SaleRecord saleRecord) {
         try {
-            // 验证操作员是否存在
+            // Validate medicine
+            if (saleRecord.getMedicine() == null || saleRecord.getMedicine().getId() == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "请选择药品");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            Medicine medicine = medicineService.findById(saleRecord.getMedicine().getId());
+            if (medicine == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "药品不存在，请重新选择");
+                return ResponseEntity.badRequest().body(response);
+            }
+            saleRecord.setMedicine(medicine);
+            
+            // Validate operator
+            Long operatorId = null;
             if (saleRecord.getOperator() != null && saleRecord.getOperator().getId() != null) {
-                User operator = userService.findById(saleRecord.getOperator().getId());
+                operatorId = saleRecord.getOperator().getId();
+                User operator = userService.findById(operatorId);
                 if (operator == null) {
                     Map<String, Object> response = new HashMap<>();
                     response.put("success", false);
@@ -152,8 +250,8 @@ public class SaleRecordController {
                     return ResponseEntity.badRequest().body(response);
                 }
             }
-
-            // 计算总金额（如果未提供）
+            
+            // Calculate total amount if not provided
             if (saleRecord.getTotalAmount() == null || saleRecord.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
                 if (saleRecord.getQuantity() != null && saleRecord.getUnitPrice() != null) {
                     BigDecimal total = saleRecord.getUnitPrice().multiply(BigDecimal.valueOf(saleRecord.getQuantity()));
@@ -161,26 +259,26 @@ public class SaleRecordController {
                 }
             }
 
-            // 设置销售时间（如果未提供）
+            // Set sale time if not provided
             if (saleRecord.getSaleTime() == null) {
                 saleRecord.setSaleTime(LocalDateTime.now());
             }
 
-            // 生成销售单号（如果未提供）
-            if (saleRecord.getRecordNo() == null || saleRecord.getRecordNo().isEmpty()) {
-                String recordNo = "SALE-" + System.currentTimeMillis();
-                saleRecord.setRecordNo(recordNo);
-            }
-
-            SaleRecord savedRecord = saleRecordService.save(saleRecord);
+            SaleRecord savedRecord = saleRecordService.createSaleRecordWithStockDeduction(saleRecord, operatorId);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "销售记录创建成功");
+            response.put("message", "销售记录创建成功，库存已自动扣减");
             response.put("data", createSaleRecordResponse(savedRecord));
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (IllegalStateException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
+            log.error("Failed to create sale record: {}", e.getMessage(), e);
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "创建销售记录失败: " + e.getMessage());
@@ -204,9 +302,6 @@ public class SaleRecordController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
-            // 不允许修改的字段：recordNo, saleTime
-            // 可更新的字段：customerInfo, customerType, isRx, remark等
-
             if (saleRecord.getCustomerInfo() != null) {
                 existingRecord.setCustomerInfo(saleRecord.getCustomerInfo());
             }
@@ -221,7 +316,6 @@ public class SaleRecordController {
                 existingRecord.setRemark(saleRecord.getRemark());
             }
 
-            // 更新症状关联（如果需要）
             if (saleRecord.getSymptom() != null) {
                 existingRecord.setSymptom(saleRecord.getSymptom());
             }
@@ -411,19 +505,12 @@ public class SaleRecordController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
         try {
-            // 如果未提供时间范围，默认使用最近30天
             if (startTime == null || endTime == null) {
                 endTime = LocalDateTime.now();
                 startTime = endTime.minusDays(30);
             }
-
-            // 获取销售总额
             Double totalAmount = saleRecordService.getTotalSalesByPeriod(startTime, endTime);
-
-            // 获取每日销售报表
             List<Map<String, Object>> dailySales = saleRecordService.getDailySalesReport(startTime, endTime);
-
-            // 获取畅销药品排名
             List<Map<String, Object>> topSellingMedicines = saleRecordService.getTopSellingMedicines(10,startTime, endTime);
 
             Map<String, Object> statistics = new HashMap<>();
@@ -455,7 +542,6 @@ public class SaleRecordController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
         try {
-            // 如果未提供时间范围，默认使用最近30天
             if (startDate == null || endDate == null) {
                 endDate = LocalDateTime.now();
                 startDate = endDate.minusDays(30);
@@ -510,11 +596,9 @@ public class SaleRecordController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            // 获取所有销售记录
             Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("saleTime").descending());
             Page<SaleRecord> allSales = saleRecordService.findAll(pageable);
             
-            // 过滤出包含指定症状的销售记录
             List<SaleRecord> salesWithSymptom = allSales.getContent().stream()
                     .filter(sale -> {
                         List<com.example.demo.entity.Symptom> symptoms = sale.getSymptom();
@@ -523,7 +607,6 @@ public class SaleRecordController {
                     })
                     .collect(Collectors.toList());
 
-            // 分页处理
             int start = page * size;
             int end = Math.min(start + size, salesWithSymptom.size());
             List<SaleRecord> pagedSales = new ArrayList<>();
@@ -531,7 +614,6 @@ public class SaleRecordController {
                 pagedSales = salesWithSymptom.subList(start, end);
             }
 
-            // 构建响应
             Map<String, Object> response = new HashMap<>();
             Map<String, Object> pageData = new HashMap<>();
             pageData.put("content", pagedSales.stream()
@@ -563,7 +645,6 @@ public class SaleRecordController {
     public ResponseEntity<Map<String, Object>> processSaleRecord(
             @PathVariable Long id) {
         try {
-            // 获取销售记录
             SaleRecord saleRecord = saleRecordService.findById(id);
             if (saleRecord == null) {
                 Map<String, Object> response = new HashMap<>();
@@ -572,7 +653,6 @@ public class SaleRecordController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
-            // 提取药品信息和销售数量
             if (saleRecord.getMedicine() == null) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
@@ -583,7 +663,6 @@ public class SaleRecordController {
             Long medicineId = saleRecord.getMedicine().getId();
             Integer quantity = saleRecord.getQuantity();
 
-            // 检查库存是否足够
             boolean isAvailable = stockService.checkStockAvailability(medicineId, quantity);
             if (!isAvailable) {
                 Map<String, Object> response = new HashMap<>();
@@ -592,13 +671,10 @@ public class SaleRecordController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
-            // 减少库存
             stockService.reduceStock(medicineId, quantity);
 
-            // 获取更新后的库存数量
             Integer remainingStock = stockService.getTotalStock(medicineId);
 
-            // 构建响应
             Map<String, Object> response = new HashMap<>();
             Map<String, Object> data = new HashMap<>();
             data.put("saleRecordId", id);
@@ -632,8 +708,6 @@ public class SaleRecordController {
     public ResponseEntity<Map<String, Object>> createSalesIssuance(
             @RequestBody Map<String, Object> issuanceData) {
         try {
-            // 注：出库单功能需要在Service层添加Issuance相关的实现
-            // 目前可通过创建销售记录来实现类似功能
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "出库单功能暂未实现，请使用销售记录创建API代替");
@@ -662,8 +736,6 @@ public class SaleRecordController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            // 注：出库单功能需要在Service层添加Issuance相关的实现
-            // 目前可通过查询销售记录来实现类似功能
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "出库单功能暂未实现，请使用销售记录查询API代替");
@@ -689,7 +761,6 @@ public class SaleRecordController {
         recordResponse.put("id", saleRecord.getId());
         recordResponse.put("recordNo", saleRecord.getRecordNo());
 
-        // 药品信息
         if (saleRecord.getMedicine() != null) {
             Map<String, Object> medicineInfo = new HashMap<>();
             medicineInfo.put("id", saleRecord.getMedicine().getId());
@@ -708,7 +779,6 @@ public class SaleRecordController {
         recordResponse.put("isRx", saleRecord.isRx());
         recordResponse.put("saleTime", saleRecord.getSaleTime());
 
-        // 症状信息
         if (saleRecord.getSymptom() != null && !saleRecord.getSymptom().isEmpty()) {
             List<Map<String, Object>> symptomList = saleRecord.getSymptom().stream()
                     .map(symptom -> {
@@ -721,7 +791,6 @@ public class SaleRecordController {
             recordResponse.put("symptoms", symptomList);
         }
 
-        // 操作员信息
         if (saleRecord.getOperator() != null) {
             Map<String, Object> operatorInfo = new HashMap<>();
             operatorInfo.put("id", saleRecord.getOperator().getId());

@@ -397,7 +397,7 @@
    - 一个药品有多个预测结果
    - PredictionResult中：`@ManyToOne @JoinColumn(name = "medicine_id") private Medicine medicine`
 
-6. **Medicine (n) : (n) Symptom**
+6. **Category (1) : (n) Medicine**
    - 一个药品对应多个症状，一个症状对应多个药品
    - Medicine中：`@ManyToMany @JoinTable(name = "medicine_symptom") private List<Symptom> symptoms`
    - 通过中间表`medicine_symptom`关联

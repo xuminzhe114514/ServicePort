@@ -79,6 +79,35 @@ public class PurchaseOrder {
     @JsonView(Views.Admin.class)
     private String remark;//备注
 
+    @PrePersist
+    public void prePersist() {
+        if (this.quantity == null) {
+            this.quantity = 0;
+        }
+        if (this.unitPrice == null) {
+            this.unitPrice = BigDecimal.ZERO;
+        }
+        if (this.totalAmount == null) {
+            this.totalAmount = BigDecimal.ZERO;
+        }
+        if (this.supplier == null) {
+            this.supplier = "";
+        }
+        if (this.orderStatus == null) {
+            this.orderStatus = 0;
+        }
+        if (this.orderTime == null) {
+            this.orderTime = LocalDateTime.now();
+        }
+        if (this.remark == null) {
+            this.remark = "";
+        }
+        // 计算总金额
+        if (unitPrice != null && quantity != null) {
+            this.totalAmount = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        }
+    }
+
     public void calculateTotalAmount() {
         if (unitPrice != null && quantity != null) {
             this.totalAmount = unitPrice.multiply(BigDecimal.valueOf(quantity));

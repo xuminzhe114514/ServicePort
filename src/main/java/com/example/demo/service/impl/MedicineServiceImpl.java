@@ -205,7 +205,7 @@ public class MedicineServiceImpl extends BaseServiceImpl<Medicine, Long, Medicin
         return repository.countByStatus(status);
     }
 
-    // 新增方法实现
+
     @Override
     public Page<Medicine> findSeasonalMedicines(Pageable pageable) {
         List<Medicine> allMedicines = repository.findByStatus(1);
@@ -216,14 +216,12 @@ public class MedicineServiceImpl extends BaseServiceImpl<Medicine, Long, Medicin
         int total = seasonalMedicines.size();
         int start = (int) pageable.getOffset();
         int end = Math.min(start + pageable.getPageSize(), total);
-
         List<Medicine> content;
         if (start >= total) {
             content = Collections.emptyList();
         } else {
             content = seasonalMedicines.subList(start, end);
         }
-
         if (!content.isEmpty()) {
             content.forEach(medicine -> {
                 Hibernate.initialize(medicine.getCategory());
@@ -233,7 +231,6 @@ public class MedicineServiceImpl extends BaseServiceImpl<Medicine, Long, Medicin
                 Hibernate.initialize(medicine.getSymptoms());
             });
         }
-
         return new PageImpl<>(content, pageable, total);
     }
 
@@ -302,7 +299,6 @@ public class MedicineServiceImpl extends BaseServiceImpl<Medicine, Long, Medicin
                 .filter(medicine -> {
                     Object stockObj = repository.sumCurrentStockByMedicineId(medicine.getId());
                     Integer stock = stockObj != null ? (stockObj instanceof Long ? ((Long)stockObj).intValue() : stockObj instanceof Integer ? (Integer)stockObj : 0) : 0;
-                    // 获取药品的库存记录，计算最小预警阈值
                     List<Stock> stocks = repository.findStocksByMedicineId(medicine.getId());
                     if (stocks.isEmpty()) return false;
                     int minWarningQuantity = stocks.stream()
@@ -385,8 +381,7 @@ public class MedicineServiceImpl extends BaseServiceImpl<Medicine, Long, Medicin
         LocalDate now = LocalDate.now();
         LocalDate endDate = now.plusDays(daysThreshold);
         List<Stock> expiringStocks = stockRepository.findExpiringStock(now, endDate);
-        
-        // 提取不重复的药品
+
         Set<Medicine> expiringMedicinesSet = expiringStocks.stream()
                 .filter(stock -> stock.getStatus() == 1)
                 .map(Stock::getMedicine)
@@ -472,6 +467,38 @@ public class MedicineServiceImpl extends BaseServiceImpl<Medicine, Long, Medicin
                 Hibernate.initialize(medicine.getPurchaseOrders());
                 Hibernate.initialize(medicine.getSymptoms());
             });
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public Page<Medicine> findByMultipleConditions(Integer status, Long categoryId, String keyword, Pageable pageable) {
+        Integer effectiveStatus = (status != null && status >= 0) ? status : null;
+        Long effectiveCategoryId = (categoryId != null && categoryId > 0) ? categoryId : null;
+        String effectiveKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+
+        List<Medicine> medicines = repository.findByMultipleConditions(effectiveStatus, effectiveCategoryId, effectiveKeyword);
+
+        if (!medicines.isEmpty()) {
+            medicines.forEach(medicine -> {
+                Hibernate.initialize(medicine.getCategory());
+                Hibernate.initialize(medicine.getStocks());
+                Hibernate.initialize(medicine.getSaleRecords());
+                Hibernate.initialize(medicine.getPurchaseOrders());
+                Hibernate.initialize(medicine.getSymptoms());
+            });
+        }
+
+        int total = medicines.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<Medicine> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = medicines.subList(start, end);
         }
 
         return new PageImpl<>(content, pageable, total);

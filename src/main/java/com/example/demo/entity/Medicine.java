@@ -4,6 +4,7 @@ import com.example.demo.views.Views;
 import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.math.BigDecimal;
@@ -39,6 +40,7 @@ public class Medicine {
     @JoinColumn(name = "category_id")
     @JsonIgnoreProperties({"medicines"})
     @JsonView(Views.Internal.class)
+    @ToString.Exclude
     private Category category;//分类信息
 
     @Column(name = "specification", length = 200)
@@ -85,7 +87,7 @@ public class Medicine {
 
     @Column(name = "storage_requirement")
     @JsonView(Views.Detail.class)
-    private Integer storageRequirement;//存储要求
+    private Integer storageRequirement;//存储要求：1-常温、2-冷藏、3-冷冻、4-保险箱冷藏、5-保险箱冷冻、6-其他
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "create_time")
@@ -96,6 +98,25 @@ public class Medicine {
     @Column(name = "update_time")
     @JsonView(Views.Admin.class)
     private LocalDateTime updateTime = LocalDateTime.now();//更新时间
+
+    @PrePersist
+    public void prePersist() {
+        if (this.status == null) {
+            this.status = 1;
+        }
+        if (this.isSeasonal != true && this.isSeasonal != false) {
+            this.isSeasonal = false;
+        }
+        if (this.isPrescription != true && this.isPrescription != false) {
+            this.isPrescription = false;
+        }
+        if (this.createTime == null) {
+            this.createTime = LocalDateTime.now();
+        }
+        if (this.updateTime == null) {
+            this.updateTime = LocalDateTime.now();
+        }
+    }
 
     @PreUpdate
     public void preUpdate() {

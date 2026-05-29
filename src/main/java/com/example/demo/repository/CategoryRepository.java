@@ -29,13 +29,13 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     // 查找所有启用状态的分类
     List<Category> findByStatusOrderBySortAsc(Integer status);
 
-    // 查找一级分类（parentId = 0）
+    // 查找一级分类
     List<Category> findByParentIdAndStatusOrderBySortAsc(Long parentId, Integer status);
 
     // 根据名称查找分类
     Optional<Category> findByName(String name);
 
-    // 自定义查询：查找某个分类的所有子孙分类
+    // 查找某个分类的所有子孙分类
     @Query("SELECT c FROM Category c WHERE c.parentId = :parentId")
     List<Category> findDescendantsByParentId(@Param("parentId") Long parentId);
 

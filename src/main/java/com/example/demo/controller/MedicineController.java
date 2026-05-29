@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +61,7 @@ public class MedicineController {
     }
 
     /**
-     * 获取所有药品（分页）
+     * 获取所有药品（分页），支持多条件查询
      * GET /api/medicines
      */
     @GetMapping
@@ -68,13 +69,24 @@ public class MedicineController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction) {
+            @RequestParam(defaultValue = "asc") String direction,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String keyword) {
         try {
             Sort sort = direction.equalsIgnoreCase("desc") ?
                     Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
             Pageable pageable = PageRequest.of(page, size, sort);
 
-            Page<Medicine> medicinePage = medicineService.findAll(pageable);
+            boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
+
+            Page<Medicine> medicinePage;
+
+            if (status != null || categoryId != null || hasKeyword) {
+                medicinePage = medicineService.findByMultipleConditions(status, categoryId, keyword, pageable);
+            } else {
+                medicinePage = medicineService.findAll(pageable);
+            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -237,7 +249,10 @@ public class MedicineController {
             Page<PurchaseOrder> purchaseMedicines = purchaseOrderService.findByMedicineId(id, PageRequest.of(0, 1));
             int total = (int)purchaseMedicines.getTotalElements();
 
-            List<PurchaseOrder> purchasedMedicines = purchaseOrderService.findByMedicineId(id, PageRequest.of(0, total)).getContent().stream().filter(purchaseOrder -> purchaseOrder.getOrderStatus()!=3).toList();
+            List<PurchaseOrder> purchasedMedicines = new ArrayList<>();
+            if (total > 0) {
+                purchasedMedicines = purchaseOrderService.findByMedicineId(id, PageRequest.of(0, total)).getContent().stream().filter(purchaseOrder -> purchaseOrder.getOrderStatus()!=3).toList();
+            }
 
             if (!purchasedMedicines.isEmpty()) {
                 Map<String, Object> response = new HashMap<>();
@@ -727,6 +742,7 @@ public class MedicineController {
                         simple.put("specification", medicine.getSpecification());
                         simple.put("unit", medicine.getUnit());
                         simple.put("retailPrice", medicine.getRetailPrice());
+                        simple.put("purchasePrice", medicine.getPurchasePrice());
                         return simple;
                     })
                     .toList();
@@ -736,6 +752,70 @@ public class MedicineController {
             response.put("currentPage", medicinePage.getNumber());
             response.put("totalItems", medicinePage.getTotalElements());
             response.put("totalPages", medicinePage.getTotalPages());
+            response.put("data", simpleList);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 获取有销售记录的药品列表（用于批量预测）
+     * GET /api/medicines/with-sales
+     */
+    @GetMapping("/with-sales")
+    public ResponseEntity<Map<String, Object>> getMedicinesWithSalesRecords(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1000") int size,
+            @RequestParam(required = false) String keyword) {
+        try {
+            // 获取所有药品
+            List<Medicine> allMedicines;
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                allMedicines = medicineService.searchMedicines(keyword);
+            } else {
+                allMedicines = medicineService.findAll();
+            }
+
+            // 筛选有销售记录的药品
+            List<Medicine> medicinesWithSales = allMedicines.stream()
+                    .filter(medicine -> {
+                        Integer totalQuantity = saleRecordService.getTotalQuantityByMedicineId(medicine.getId());
+                        return totalQuantity != null && totalQuantity > 0;
+                    })
+                    .toList();
+
+            // 分页处理
+            int start = page * size;
+            int end = Math.min(start + size, medicinesWithSales.size());
+            List<Medicine> pageContent = start < medicinesWithSales.size() 
+                    ? medicinesWithSales.subList(start, end) 
+                    : List.of();
+
+            // 构建药品简要信息
+            List<Map<String, Object>> simpleList = pageContent.stream()
+                    .map(medicine -> {
+                        Map<String, Object> simple = new HashMap<>();
+                        simple.put("id", medicine.getId());
+                        simple.put("medicineCode", medicine.getMedicineCode());
+                        simple.put("name", medicine.getName());
+                        simple.put("specification", medicine.getSpecification());
+                        simple.put("unit", medicine.getUnit());
+                        simple.put("retailPrice", medicine.getRetailPrice());
+                        simple.put("purchasePrice", medicine.getPurchasePrice());
+                        return simple;
+                    })
+                    .toList();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("currentPage", page);
+            response.put("totalItems", medicinesWithSales.size());
+            response.put("totalPages", (int) Math.ceil((double) medicinesWithSales.size() / size));
             response.put("data", simpleList);
 
             return ResponseEntity.ok(response);

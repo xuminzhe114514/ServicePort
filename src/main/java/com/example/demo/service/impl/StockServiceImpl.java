@@ -26,7 +26,7 @@ import static org.springframework.data.support.PageableExecutionUtils.getPage;
 public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockRepository>
         implements StockService {
 
-    protected StockServiceImpl(StockRepository repository) {
+    public StockServiceImpl(StockRepository repository) {
         super(repository);
     }
 
@@ -215,7 +215,7 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         return results.stream()
                 .collect(Collectors.toMap(
                         obj -> (Long) obj[0],
-                        obj -> (Integer) obj[1]
+                        obj -> obj[1] != null ? ((Number) obj[1]).intValue() : 0
                 ));
     }
 
@@ -369,7 +369,7 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         Object totalStockObj = repository.sumQuantityByMedicineId(medicineId);
         Integer totalStock = totalStockObj != null ? (totalStockObj instanceof Long ? ((Long)totalStockObj).intValue() : totalStockObj instanceof Integer ? (Integer)totalStockObj : 0) : 0;
 
-        // 获取低库存信息（需要在内存中过滤）
+        // 获取低库存信息
         List<Stock> allStocks = repository.findByMedicineId(medicineId);
         long lowStockCount = allStocks.stream()
                 .filter(stock -> stock.getStatus() == 1)
@@ -456,13 +456,12 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
         return getPage(filtered, pageable, filtered::size);
     }
 
-    // 新增方法实现
+
     @Override
     public Double calculateStockTurnoverRate(String period) {
         // 根据时间段计算库存周转率
         LocalDateTime endDate = LocalDateTime.now();
         LocalDateTime startDate;
-    
         // 根据 period 参数设置开始日期
         switch (period) {
             case "week":
@@ -481,9 +480,9 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
                 startDate = endDate.minusMonths(1);
         }
         
-        // 使用仓库方法计算库存周转率
+        // 计算库存周转率
         List<Object[]> turnoverData = repository.calculateStockTurnoverRate(startDate, endDate);
-        
+
         // 计算平均周转率
         return turnoverData.stream()
                 .mapToDouble(obj -> {
@@ -668,6 +667,52 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, Long, StockReposito
     @Override
     public Page<Stock> findByShelfLocationContaining(String location, Pageable pageable) {
         List<Stock> stocks = repository.findByShelfLocationContaining(location);
+
+        if (!stocks.isEmpty()) {
+            stocks.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+
+        return getPage(stocks, pageable, stocks::size);
+    }
+
+    @Override
+    public Page<Stock> searchByKeyword(String keyword, Pageable pageable) {
+        List<Stock> stocks = repository.searchByKeyword(keyword);
+
+        if (!stocks.isEmpty()) {
+            stocks.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+
+        return getPage(stocks, pageable, stocks::size);
+    }
+
+    @Override
+    public Page<Stock> findByMedicineName(String medicineName, Pageable pageable) {
+        List<Stock> stocks = repository.findByMedicineNameContaining(medicineName);
+
+        if (!stocks.isEmpty()) {
+            stocks.forEach(stock -> {
+                Hibernate.initialize(stock.getMedicine());
+            });
+        }
+
+        return getPage(stocks, pageable, stocks::size);
+    }
+
+    @Override
+    public Page<Stock> findByMultipleConditions(String medicineName, String batchNumber, 
+            String shelfLocation, Integer status, Pageable pageable) {
+        String effectiveMedicineName = (medicineName != null && !medicineName.trim().isEmpty()) ? medicineName.trim() : null;
+        String effectiveBatchNumber = (batchNumber != null && !batchNumber.trim().isEmpty()) ? batchNumber.trim() : null;
+        String effectiveShelfLocation = (shelfLocation != null && !shelfLocation.trim().isEmpty()) ? shelfLocation.trim() : null;
+        Integer effectiveStatus = (status != null && status >= 0) ? status : null;
+
+        List<Stock> stocks = repository.findByMultipleConditions(
+                effectiveMedicineName, effectiveBatchNumber, effectiveShelfLocation, effectiveStatus);
 
         if (!stocks.isEmpty()) {
             stocks.forEach(stock -> {

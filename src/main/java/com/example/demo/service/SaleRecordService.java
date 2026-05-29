@@ -20,6 +20,12 @@ public interface SaleRecordService extends BaseService<SaleRecord, Long> {
     List<Map<String, Object>> getDailySalesReport(LocalDateTime startDate, LocalDateTime endDate);
     List<Map<String, Object>> getTopSellingMedicines(int limit, LocalDateTime startDate, LocalDateTime endDate);
     SaleRecord createSaleRecord(SaleRecord saleRecord, Long operatorId);
+    
+    /**
+     * ★ 创建销售记录并自动扣减库存（事务控制）
+     * 如果库存扣减失败，整个操作会回滚
+     */
+    SaleRecord createSaleRecordWithStockDeduction(SaleRecord saleRecord, Long operatorId);
 
     Page<SaleRecord> findByCustomerType(Integer customerType, Pageable pageable);
     Page<Map<String, Object>> getSalesByCategory(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
@@ -29,4 +35,6 @@ public interface SaleRecordService extends BaseService<SaleRecord, Long> {
     Page<Map<String, Object>> getSalesPrediction(int days, Pageable pageable);
     Page<SaleRecord> findPrescriptionSales(Pageable pageable);
     Map<String, Object> getSalesStatisticsByPeriod(LocalDateTime startDate, LocalDateTime endDate);
+    Page<SaleRecord> searchByKeyword(String keyword, Pageable pageable);
+    Page<SaleRecord> findByMultipleConditions(String keyword, LocalDateTime startTime, LocalDateTime endTime, Long operatorId, Integer symptomId, Long medicineId, Pageable pageable);
 }

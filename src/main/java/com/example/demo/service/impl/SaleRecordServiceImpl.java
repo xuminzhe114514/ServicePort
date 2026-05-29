@@ -2,9 +2,12 @@ package com.example.demo.service.impl;
 
 import com.example.demo.entity.SaleRecord;
 import com.example.demo.entity.User;
+import com.example.demo.entity.Medicine;
 import com.example.demo.repository.SaleRecordRepository;
+import com.example.demo.repository.MedicineRepository;
 import com.example.demo.service.SaleRecordService;
 import com.example.demo.service.UserService;
+import com.example.demo.service.StockService;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -33,6 +36,12 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
 
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private MedicineRepository medicineRepository;
+    
+    @Autowired
+    private StockService stockService;
 
     private void initializeSaleRecordAssociations(SaleRecord record) {
         if (record != null) {
@@ -267,6 +276,13 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
             }
             map.put("totalQuantity", quantity);
             
+            if (medicineId > 0) {
+                Medicine medicine = medicineRepository.findById(medicineId).orElse(null);
+                if (medicine != null) {
+                    map.put("name", medicine.getName());
+                }
+            }
+            
             return map;
         }).collect(Collectors.toList());
     }
@@ -279,8 +295,8 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
         }
 
         if (saleRecord.getRecordNo() == null) {
-            String recordNo = "SALE" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
-                    + String.format("%04d", (int)(Math.random() * 10000));
+            String recordNo = "S" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+                    + String.format("%06d", (int)(Math.random() * 1000000));
             saleRecord.setRecordNo(recordNo);
         }
 
@@ -295,7 +311,53 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
         return savedRecord;
     }
 
-    // 新增方法实现
+    
+    @Transactional(rollbackFor = Exception.class)
+    public SaleRecord createSaleRecordWithStockDeduction(SaleRecord saleRecord, Long operatorId) {
+        if (operatorId != null) {
+            User operator = userService.findById(operatorId);
+            if (operator != null) {
+                saleRecord.setOperator(operator);
+            }
+        }
+
+        if (saleRecord.getRecordNo() == null) {
+            String recordNo = "S" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+                    + String.format("%06d", (int)(Math.random() * 1000000));
+            saleRecord.setRecordNo(recordNo);
+        }
+
+        if (saleRecord.getUnitPrice() != null && saleRecord.getQuantity() != null) {
+            saleRecord.calculateTotalAmount();
+        }
+
+        SaleRecord savedRecord = repository.save(saleRecord);
+        
+        try {
+            if (savedRecord.getMedicine() != null && savedRecord.getQuantity() != null && savedRecord.getQuantity() > 0) {
+                Long medicineId = savedRecord.getMedicine().getId();
+                Integer quantity = savedRecord.getQuantity();
+                
+                boolean isAvailable = stockService.checkStockAvailability(medicineId, quantity);
+                if (!isAvailable) {
+                    throw new IllegalStateException(
+                        String.format("库存不足！药品ID: %d, 需求数量: %d", medicineId, quantity)
+                    );
+                }
+                
+                stockService.reduceStock(medicineId, quantity);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("库存扣减失败，销售记录创建已回滚: " + e.getMessage(), e);
+        }
+        
+        if (savedRecord != null) {
+            initializeSaleRecordAssociations(savedRecord);
+        }
+        
+        return savedRecord;
+    }
+
     @Override
     public Page<SaleRecord> findByCustomerType(Integer customerType, Pageable pageable) {
         List<SaleRecord> sales = repository.findByCustomerType(customerType);
@@ -524,7 +586,6 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
     @Deprecated
     @Override
     public Page<Map<String, Object>> getSalesPrediction(int days, Pageable pageable) {
-        // 这里简化实现，实际应该使用预测算法
         List<Map<String, Object>> predictions = new ArrayList<>();
         LocalDate startDate = LocalDate.now();
         
@@ -579,16 +640,13 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
     public Map<String, Object> getSalesStatisticsByPeriod(LocalDateTime startDate, LocalDateTime endDate) {
         Map<String, Object> stats = new HashMap<>();
         
-        // 销售总额
         Object totalAmountObj = repository.sumTotalAmountByPeriod(startDate, endDate);
         Double totalAmount = totalAmountObj != null ? (totalAmountObj instanceof BigDecimal ? ((BigDecimal)totalAmountObj).doubleValue() : totalAmountObj instanceof Double ? (Double)totalAmountObj : 0.0) : 0.0;
         stats.put("totalAmount", totalAmount);
         
-        // 销售记录数
         List<SaleRecord> sales = repository.findBySaleTimeBetween(startDate, endDate);
         stats.put("recordCount", sales.size());
         
-        // 平均销售额
         if (!sales.isEmpty()) {
             double averageAmount = sales.stream()
                     .mapToDouble(sale -> sale.getTotalAmount().doubleValue())
@@ -600,5 +658,53 @@ public class SaleRecordServiceImpl extends BaseServiceImpl<SaleRecord, Long, Sal
         }
         
         return stats;
+    }
+
+    @Override
+    public Page<SaleRecord> searchByKeyword(String keyword, Pageable pageable) {
+        List<SaleRecord> records = repository.searchByKeyword(keyword);
+        
+        if (!records.isEmpty()) {
+            records.forEach(this::initializeSaleRecordAssociations);
+        }
+        
+        int total = records.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+        
+        List<SaleRecord> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = records.subList(start, end);
+        }
+        
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public Page<SaleRecord> findByMultipleConditions(String keyword, LocalDateTime startTime, 
+            LocalDateTime endTime, Long operatorId, Integer symptomId, Long medicineId, Pageable pageable) {
+        String effectiveKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+        Long effectiveOperatorId = (operatorId != null && operatorId > 0) ? operatorId : null;
+        Integer effectiveSymptomId = (symptomId != null && symptomId > 0) ? symptomId : null;
+        Long effectiveMedicineId = (medicineId != null && medicineId > 0) ? medicineId : null;
+
+        List<SaleRecord> records = repository.findByMultipleConditions(
+                effectiveKeyword, startTime, endTime, effectiveOperatorId, effectiveSymptomId, effectiveMedicineId);
+        
+        if (!records.isEmpty()) {
+            records.forEach(this::initializeSaleRecordAssociations);
+        }
+        int total = records.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+        List<SaleRecord> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = records.subList(start, end);
+        }
+        return new PageImpl<>(content, pageable, total);
     }
 }

@@ -38,5 +38,6 @@ public interface PurchaseOrderService extends BaseService<PurchaseOrder, Long> {
     Page<Map<String, Object>> getPurchaseSuggestions(Pageable pageable);
     Page<Map<String, Object>> getPurchaseByCategory(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
     Map<String, Object> getOrderDetailsWithMedicine(Long orderId);
+    Page<PurchaseOrder> findByMultipleConditions(String keyword, LocalDateTime startTime, LocalDateTime endTime, Integer orderStatus, Long medicineId, Pageable pageable);
 
 }

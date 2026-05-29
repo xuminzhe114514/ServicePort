@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +46,7 @@ public class PurchaseOrderController {
     }
 
     /**
-     * 获取所有采购订单（分页）
+     * 获取所有采购订单（分页），支持多条件查询
      * GET /api/purchase-orders
      */
     @GetMapping
@@ -53,13 +54,49 @@ public class PurchaseOrderController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
+            @RequestParam(defaultValue = "desc") String direction,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            @RequestParam(required = false) Integer orderStatus,
+            @RequestParam(required = false) Long medicineId) {
         try {
             Sort sort = direction.equalsIgnoreCase("desc") ?
                     Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
             Pageable pageable = PageRequest.of(page, size, sort);
 
-            Page<PurchaseOrder> orderPage = purchaseOrderService.findAll(pageable);
+            LocalDateTime startDateTime = null;
+            LocalDateTime endDateTime = null;
+
+            if (startTime != null && !startTime.trim().isEmpty()) {
+                try {
+                    startDateTime = LocalDateTime.parse(startTime.trim(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                } catch (Exception e) {
+                    startDateTime = LocalDate.parse(startTime.trim()).atStartOfDay();
+                }
+            }
+
+            if (endTime != null && !endTime.trim().isEmpty()) {
+                try {
+                    endDateTime = LocalDateTime.parse(endTime.trim(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                } catch (Exception e) {
+                    endDateTime = LocalDate.parse(endTime.trim()).atTime(23, 59, 59);
+                }
+            }
+
+            boolean hasFilter = (keyword != null && !keyword.trim().isEmpty()) ||
+                    (startTime != null && !startTime.trim().isEmpty()) ||
+                    (endTime != null && !endTime.trim().isEmpty()) ||
+                    (orderStatus != null) ||
+                    (medicineId != null);
+
+            Page<PurchaseOrder> orderPage;
+
+            if (hasFilter) {
+                orderPage = purchaseOrderService.findByMultipleConditions(keyword, startDateTime, endDateTime, orderStatus, medicineId, pageable);
+            } else {
+                orderPage = purchaseOrderService.findAll(pageable);
+            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -606,7 +643,6 @@ public class PurchaseOrderController {
     @DeleteMapping("/batch")
     public ResponseEntity<Map<String, Object>> deletePurchaseOrders(@RequestBody List<Long> ids) {
         try {
-            // 检查所有订单是否存在
             for (Long id : ids) {
                 if (!purchaseOrderService.exists(id)) {
                     Map<String, Object> response = new HashMap<>();
@@ -640,7 +676,6 @@ public class PurchaseOrderController {
             @RequestBody List<PurchaseOrder> orders,
             @RequestParam Long operatorId) {
 
-        // 检查订单号是否重复
         for (PurchaseOrder order : orders) {
             if (order.getOrderNo() != null) {
                 PurchaseOrder existingOrder = purchaseOrderService.findByOrderNo(order.getOrderNo());
@@ -784,7 +819,6 @@ public class PurchaseOrderController {
         orderResponse.put("id", order.getId());
         orderResponse.put("orderNo", order.getOrderNo());
 
-        // 药品信息
         if (order.getMedicine() != null) {
             Map<String, Object> medicineInfo = new HashMap<>();
             medicineInfo.put("id", order.getMedicine().getId());
@@ -804,7 +838,6 @@ public class PurchaseOrderController {
         orderResponse.put("expectedArrival", order.getExpectedArrival());
         orderResponse.put("actualArrival", order.getActualArrival());
 
-        // 操作员信息
         if (order.getOperator() != null) {
             Map<String, Object> operatorInfo = new HashMap<>();
             operatorInfo.put("id", order.getOperator().getId());
@@ -814,19 +847,14 @@ public class PurchaseOrderController {
         }
 
         orderResponse.put("remark", order.getRemark());
-
-        // 添加状态文本描述
         String[] statusTexts = {"待处理", "已确认", "已到货", "已取消"};
         if (order.getOrderStatus() >= 0 && order.getOrderStatus() < statusTexts.length) {
             orderResponse.put("orderStatusText", statusTexts[order.getOrderStatus()]);
         }
-
-        // 添加是否过期标记
         if (order.getExpectedArrival() != null && order.getOrderStatus() < 2) {
             boolean isOverdue = order.getExpectedArrival().isBefore(LocalDate.now());
             orderResponse.put("isOverdue", isOverdue);
         }
-
         return orderResponse;
     }
 }

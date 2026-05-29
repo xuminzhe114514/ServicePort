@@ -54,6 +54,16 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
     //根据货品状态查找库存
     List<Stock> findByStatus(Integer status);
 
+    // 根据状态查找库存并加载关联的药品（解决懒加载问题）
+    @Query("SELECT s FROM Stock s JOIN FETCH s.medicine WHERE s.status = :status AND s.quantity > 0")
+    List<Stock> findByStatusWithMedicine(@Param("status") Integer status);
+
+    // 按药品分组统计每个药品的库存总数（优化：直接返回药品ID和总库存数量）
+    @Query("SELECT s.medicine.id as medicineId, COALESCE(SUM(s.quantity), 0) as totalQuantity " +
+           "FROM Stock s WHERE s.status = :status AND s.quantity > 0 " +
+           "GROUP BY s.medicine.id")
+    List<Object[]> findStockQuantityGroupedByMedicine(@Param("status") Integer status);
+
     // 根据库存ID查询关联的药品详情
     @Query("SELECT s.medicine FROM Stock s WHERE s.id = :stockId")
     Medicine findMedicineByStockId(@Param("stockId") Long stockId);
@@ -67,6 +77,29 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
     // 根据货架位置查询库存
     @Query("SELECT s FROM Stock s WHERE s.shelfLocation LIKE LOWER(CONCAT('%', :location, '%')) AND s.status = 1")
     List<Stock> findByShelfLocationContaining(@Param("location") String location);
+
+    // 根据关键词搜索库存（支持药品名称、批号、货架位置）
+    @Query("SELECT s FROM Stock s JOIN s.medicine m WHERE s.status = 1 AND " +
+           "(LOWER(m.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(s.batchNumber) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(s.shelfLocation) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    List<Stock> searchByKeyword(@Param("keyword") String keyword);
+
+    // 根据药品名称查找库存
+    @Query("SELECT s FROM Stock s JOIN s.medicine m WHERE s.status = 1 AND LOWER(m.name) LIKE LOWER(CONCAT('%', :medicineName, '%'))")
+    List<Stock> findByMedicineNameContaining(@Param("medicineName") String medicineName);
+
+    // 多条件筛选库存
+    @Query("SELECT s FROM Stock s JOIN s.medicine m WHERE " +
+           "(:medicineName IS NULL OR LOWER(m.name) LIKE LOWER(CONCAT('%', :medicineName, '%'))) AND " +
+           "(:batchNumber IS NULL OR LOWER(s.batchNumber) LIKE LOWER(CONCAT('%', :batchNumber, '%'))) AND " +
+           "(:shelfLocation IS NULL OR LOWER(s.shelfLocation) LIKE LOWER(CONCAT('%', :shelfLocation, '%'))) AND " +
+           "(:status IS NULL OR s.status = :status)")
+    List<Stock> findByMultipleConditions(
+            @Param("medicineName") String medicineName,
+            @Param("batchNumber") String batchNumber,
+            @Param("shelfLocation") String shelfLocation,
+            @Param("status") Integer status);
 
     // 查询过期库存（状态为0）
     @Query("SELECT s FROM Stock s WHERE s.status = 0 ORDER BY s.expirationDate ASC")

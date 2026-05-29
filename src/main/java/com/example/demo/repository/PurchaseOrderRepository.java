@@ -69,6 +69,21 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Lo
             "       LOWER(m.name) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     List<PurchaseOrder> findByKeywordContaining(@Param("keyword") String keyword);
 
+    // 多条件查询：关键词（订单号/供应商/药品名称）、日期区间、订单状态、药品ID
+    @Query("SELECT po FROM PurchaseOrder po LEFT JOIN po.medicine m WHERE " +
+           "(:keyword IS NULL OR :keyword = '' OR LOWER(po.orderNo) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(po.supplier) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(m.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +
+           "(:startTime IS NULL OR po.orderTime >= :startTime) AND " +
+           "(:endTime IS NULL OR po.orderTime <= :endTime) AND " +
+           "(:orderStatus IS NULL OR po.orderStatus = :orderStatus) AND " +
+           "(:medicineId IS NULL OR m.id = :medicineId)")
+    List<PurchaseOrder> findByMultipleConditions(
+            @Param("keyword") String keyword,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime,
+            @Param("orderStatus") Integer orderStatus,
+            @Param("medicineId") Long medicineId);
+
     // 根据采购订单ID查询关联的药品详情
     @Query("SELECT po.medicine FROM PurchaseOrder po WHERE po.id = :purchaseOrderId")
     Medicine findMedicineByPurchaseOrderId(@Param("purchaseOrderId") Long purchaseOrderId);

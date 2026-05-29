@@ -56,6 +56,19 @@ public interface MedicineRepository extends JpaRepository<Medicine, Long> {
             "m.status = :status")
     List<Medicine> searchMedicines(@Param("keyword") String keyword, @Param("status") Integer status);
 
+    // 多条件查询：状态、分类ID、关键词（药品名、通用名、生产厂家）
+    @Query("SELECT m FROM Medicine m WHERE " +
+           "(:status IS NULL OR m.status = :status) AND " +
+           "(:categoryId IS NULL OR m.category.id = :categoryId) AND " +
+           "(:keyword IS NULL OR :keyword = '' OR " +
+           "LOWER(m.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(m.genericName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(m.manufacturer) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    List<Medicine> findByMultipleConditions(
+            @Param("status") Integer status,
+            @Param("categoryId") Long categoryId,
+            @Param("keyword") String keyword);
+
     // 统计药品数量
     @Query("SELECT COUNT(m) FROM Medicine m WHERE m.status = :status")
     long countByStatus(@Param("status") Integer status);

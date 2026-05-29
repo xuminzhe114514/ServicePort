@@ -64,6 +64,19 @@ public class User {
     @JsonView(Views.Admin.class)
     private LocalDateTime updateTime = LocalDateTime.now();//更新时间
 
+    @PrePersist
+    public void prePersist() {
+        if (this.status == null) {
+            this.status = 1;
+        }
+        if (this.createTime == null) {
+            this.createTime = LocalDateTime.now();
+        }
+        if (this.updateTime == null) {
+            this.updateTime = LocalDateTime.now();
+        }
+    }
+
     @PreUpdate
     public void preUpdate() {
         this.updateTime = LocalDateTime.now();

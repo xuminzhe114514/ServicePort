@@ -58,4 +58,10 @@ public interface PredictionResultService extends BaseService<PredictionResult, L
     
     boolean checkModelServiceHealth();
     Map<String, Object> getModelServiceInfo();
+    
+    /**
+     * 批量刷新预测记录的准确率（实时计算）
+     * @param predictions 预测记录列表
+     */
+    void refreshAccuracyForPredictions(List<PredictionResult> predictions);
 }

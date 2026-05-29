@@ -26,6 +26,14 @@ public interface SaleRecordRepository extends JpaRepository<SaleRecord, Long> {
     @Query("SELECT sr FROM SaleRecord sr WHERE sr.medicine.id = :medicineId")
     List<SaleRecord> findByMedicineId(@Param("medicineId") Long medicineId);
 
+    // 根据药品ID和时间段查找销售记录（用于准确率计算）
+    @Query("SELECT sr FROM SaleRecord sr WHERE sr.medicine.id = :medicineId AND sr.saleTime BETWEEN :startTime AND :endTime")
+    List<SaleRecord> findByMedicineIdAndSaleTimeBetween(
+        @Param("medicineId") Long medicineId,
+        @Param("startTime") LocalDateTime startTime,
+        @Param("endTime") LocalDateTime endTime
+    );
+
     // 根据操作员ID查找销售记录（使用关联对象）
     @Query("SELECT sr FROM SaleRecord sr WHERE sr.operator.id = :operatorId")
     List<SaleRecord> findByOperatorId(@Param("operatorId") Long operatorId);
@@ -128,4 +136,26 @@ public interface SaleRecordRepository extends JpaRepository<SaleRecord, Long> {
     List<Object[]> findTopSellingMedicinesByAmount(@Param("startDate") LocalDateTime startDate,
                                                   @Param("endDate") LocalDateTime endDate,
                                                   Pageable pageable);
+
+    // 根据销售单号或药品名称模糊搜索
+    @Query("SELECT sr FROM SaleRecord sr JOIN sr.medicine m WHERE " +
+           "(LOWER(sr.recordNo) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(m.name) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    List<SaleRecord> searchByKeyword(@Param("keyword") String keyword);
+
+    // 多条件联立查询
+    @Query("SELECT sr FROM SaleRecord sr JOIN sr.medicine m LEFT JOIN sr.symptom s WHERE " +
+           "(:keyword IS NULL OR LOWER(sr.recordNo) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(m.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +
+           "(:startTime IS NULL OR sr.saleTime >= :startTime) AND " +
+           "(:endTime IS NULL OR sr.saleTime <= :endTime) AND " +
+           "(:operatorId IS NULL OR sr.operator.id = :operatorId) AND " +
+           "(:symptomId IS NULL OR s.id = :symptomId) AND " +
+           "(:medicineId IS NULL OR m.id = :medicineId)")
+    List<SaleRecord> findByMultipleConditions(
+            @Param("keyword") String keyword,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime,
+            @Param("operatorId") Long operatorId,
+            @Param("symptomId") Integer symptomId,
+            @Param("medicineId") Long medicineId);
 }

@@ -4,6 +4,7 @@ import com.example.demo.views.Views;
 import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.math.BigDecimal;
@@ -47,7 +48,7 @@ public class PredictionResult {
 
     @Column(name = "model_type", length = 50)
     @JsonView(Views.Internal.class)
-    private String modelType;//预测模型类型（Prophet, ARIMA, LightGBM等）
+    private String modelType;//预测模型类型
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     @Column(name = "accuracy_rate", precision = 5, scale = 2)
@@ -67,6 +68,34 @@ public class PredictionResult {
     @Column(name = "update_time")
     @JsonView(Views.Admin.class)
     private LocalDateTime updateTime = LocalDateTime.now();//更新时间
+
+    @PrePersist
+    public void prePersist() {
+        if (this.predictedQuantity == null) {
+            this.predictedQuantity = 0;
+        }
+        if (this.confidenceIntervalLower == null) {
+            this.confidenceIntervalLower = 0;
+        }
+        if (this.confidenceIntervalUpper == null) {
+            this.confidenceIntervalUpper = 0;
+        }
+        if (this.modelType == null) {
+            this.modelType = "";
+        }
+        if (this.accuracyRate == null) {
+            this.accuracyRate = BigDecimal.ZERO;
+        }
+        if (this.recommendedOrderQuantity == null) {
+            this.recommendedOrderQuantity = 0;
+        }
+        if (this.createTime == null) {
+            this.createTime = LocalDateTime.now();
+        }
+        if (this.updateTime == null) {
+            this.updateTime = LocalDateTime.now();
+        }
+    }
 
     @PreUpdate
     public void preUpdate() {

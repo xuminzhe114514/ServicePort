@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Random;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +29,51 @@ public class StockController {
 
     @Autowired
     private StockService stockService;
+
+    private static final Random RANDOM = new Random();
+
+    private void initializeStockFields(Stock stock) {
+        if (stock.getStatus() == null) {
+            stock.setStatus(1);
+        }
+        if (stock.getWarningQuantity() == null) {
+            stock.setWarningQuantity(10);
+        }
+        if (stock.getMinimumOrderQuantity() == null) {
+            stock.setMinimumOrderQuantity(20);
+        }
+        if (stock.getLeadTimeDays() == null) {
+            stock.setLeadTimeDays(7);
+        }
+        if (stock.getReorderPoint() == null) {
+            stock.setReorderPoint(10);
+        }
+        if (stock.getProductionDate() == null) {
+            stock.setProductionDate(LocalDate.now());
+        }
+        if (stock.getExpirationDate() == null) {
+            stock.setExpirationDate(LocalDate.now().plusYears(1));
+        }
+        if (stock.getBatchNumber() == null || stock.getBatchNumber().trim().isEmpty()) {
+            stock.setBatchNumber(generateBatchNumber());
+        }
+        if (stock.getShelfLocation() == null || stock.getShelfLocation().trim().isEmpty()) {
+            stock.setShelfLocation(generateShelfLocation());
+        }
+    }
+
+    private String generateBatchNumber() {
+        String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        int randomPart = RANDOM.nextInt(1000000);
+        return String.format("t%s%06d", datePart, randomPart);
+    }
+
+    private String generateShelfLocation() {
+        char zone = (char) ('A' + RANDOM.nextInt(26));
+        int row = RANDOM.nextInt(99) + 1;
+        int shelf = RANDOM.nextInt(99) + 1;
+        return String.format("%c-%02d-%02d", zone, row, shelf);
+    }
 
     @GetMapping("/test")
     public ResponseEntity<Map<String, Object>> test() {
@@ -44,7 +91,7 @@ public class StockController {
     }
 
     /**
-     * 获取所有库存（分页）
+     * 获取所有库存（分页），支持多条件筛选
      * GET /api/stocks
      */
     @GetMapping
@@ -52,13 +99,28 @@ public class StockController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction) {
+            @RequestParam(defaultValue = "asc") String direction,
+            @RequestParam(required = false) String medicineName,
+            @RequestParam(required = false) String batchNumber,
+            @RequestParam(required = false) String shelfLocation,
+            @RequestParam(required = false) Integer status) {
         try {
             Sort sort = direction.equalsIgnoreCase("desc") ?
                     Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
             Pageable pageable = PageRequest.of(page, size, sort);
 
-            Page<Stock> stockPage = stockService.findAll(pageable);
+            Page<Stock> stockPage;
+
+            boolean hasFilter = (medicineName != null && !medicineName.trim().isEmpty()) ||
+                    (batchNumber != null && !batchNumber.trim().isEmpty()) ||
+                    (shelfLocation != null && !shelfLocation.trim().isEmpty()) ||
+                    (status != null);
+
+            if (hasFilter) {
+                stockPage = stockService.findByMultipleConditions(medicineName, batchNumber, shelfLocation, status, pageable);
+            } else {
+                stockPage = stockService.findAll(pageable);
+            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -113,16 +175,7 @@ public class StockController {
      */
     @PostMapping
     public ResponseEntity<Map<String, Object>> createStock(@RequestBody Stock stock) {
-        if (stock.getStatus() == null) {
-            stock.setStatus(1);
-        }
-        if (stock.getQuantity() == null) {
-            stock.setQuantity(0);
-        }
-        if (stock.getWarningQuantity() == null) {
-            stock.setWarningQuantity(10);
-        }
-
+        initializeStockFields(stock);
         try {
             Stock savedStock = stockService.save(stock);
 
@@ -599,6 +652,56 @@ public class StockController {
     }
 
     /**
+     * 根据药品名称查找库存
+     * GET /api/stocks/medicine-name/{medicineName}
+     */
+    @GetMapping("/medicine-name/{medicineName}")
+    public ResponseEntity<Map<String, Object>> getStocksByMedicineName(
+            @PathVariable String medicineName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            if (medicineName == null || medicineName.trim().isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "药品名称不能为空");
+                response.put("data", List.of());
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+            Page<Stock> stockPage = stockService.findByMedicineName(medicineName.trim(), pageable);
+
+            Map<String, Object> response = new HashMap<>();
+            if (stockPage.getTotalElements() == 0) {
+                response.put("success", false);
+                response.put("message", "未找到符合条件的库存");
+                response.put("data", List.of());
+            } else {
+                response.put("success", true);
+                response.put("message", "查询成功");
+                Map<String, Object> pageData = new HashMap<>();
+                pageData.put("medicineName", medicineName);
+                pageData.put("content", stockPage.getContent().stream().map(this::createStockResponse).toList());
+                pageData.put("currentPage", page);
+                pageData.put("pageSize", size);
+                pageData.put("totalItems", stockPage.getTotalElements());
+                pageData.put("totalPages", stockPage.getTotalPages());
+                pageData.put("isFirst", stockPage.isFirst());
+                pageData.put("isLast", stockPage.isLast());
+                response.put("data", pageData);
+            }
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "操作失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
      * 批量删除库存
      * DELETE /api/stocks/batch
      */
@@ -635,15 +738,8 @@ public class StockController {
     @PostMapping("/batch")
     public ResponseEntity<Map<String, Object>> createStocks(@RequestBody List<Stock> stocks) {
         for (Stock stock : stocks) {
-            if (stock.getStatus() == null) {
-                stock.setStatus(1);
-            }
-            if (stock.getQuantity() == null) {
-                stock.setQuantity(0);
-            }
-            if (stock.getWarningQuantity() == null) {
-                stock.setWarningQuantity(10);
-            }
+            // 初始化每个 Stock 的字段
+            initializeStockFields(stock);
         }
 
         List<Stock> savedStocks;
@@ -852,11 +948,18 @@ public class StockController {
     @GetMapping("/transactions")
     public ResponseEntity<Map<String, Object>> getStockTransactions(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword) {
         try {
 
             Pageable pageable = PageRequest.of(page, size, Sort.by("updateTime").descending());
-            Page<Stock> stockPage = stockService.findAll(pageable);
+            Page<Stock> stockPage;
+
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                stockPage = stockService.searchByKeyword(keyword.trim(), pageable);
+            } else {
+                stockPage = stockService.findAll(pageable);
+            }
 
             List<Map<String, Object>> transactions = stockPage.getContent().stream()
                     .map(stock -> {
@@ -1021,5 +1124,52 @@ public class StockController {
         }
 
         return stockResponse;
+    }
+
+    /**
+     * 从采购订单创建库存（用于订单到货时）
+     * POST /api/stocks/from-purchase-order
+     */
+    @PostMapping("/from-purchase-order")
+    public ResponseEntity<Map<String, Object>> createStockFromPurchaseOrder(
+            @RequestBody Map<String, Object> orderInfo) {
+        try {
+            // 提取订单信息
+            Long medicineId = Long.valueOf(orderInfo.get("medicineId").toString());
+            Integer quantity = Integer.valueOf(orderInfo.get("quantity").toString());
+            
+            // 创建库存对象
+            Stock stock = new Stock();
+            
+            // 设置药品关联（需要创建一个 Medicine 对象，只包含 ID）
+            com.example.demo.entity.Medicine medicine = new com.example.demo.entity.Medicine();
+            medicine.setId(medicineId);
+            stock.setMedicine(medicine);
+            
+            stock.setQuantity(quantity);
+            
+            // 初始化其他字段（会自动生成批号和货架位置）
+            initializeStockFields(stock);
+            
+            // 保存库存
+            Stock savedStock = stockService.save(stock);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "库存创建成功");
+            response.put("data", createStockResponse(savedStock));
+            response.put("stockInfo", Map.of(
+                "batchNumber", savedStock.getBatchNumber(),
+                "shelfLocation", savedStock.getShelfLocation(),
+                "message", "已自动创建库存记录，请前往库存管理页面修改详细信息"
+            ));
+            
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "创建库存失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 }

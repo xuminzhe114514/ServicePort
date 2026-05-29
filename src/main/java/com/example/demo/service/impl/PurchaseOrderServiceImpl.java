@@ -252,8 +252,8 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
             order.setOperator(operator);
         }
         if (order.getOrderNo() == null) {
-            String orderNo = "PO" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
-                    + String.format("%04d", (int)(Math.random() * 10000));
+            String orderNo = "O" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+                    + String.format("%06d", (int)(Math.random() * 1000000));
             order.setOrderNo(orderNo);
         }
         if (order.getUnitPrice() != null && order.getQuantity() != null) {
@@ -826,5 +826,36 @@ public class PurchaseOrderServiceImpl extends BaseServiceImpl<PurchaseOrder, Lon
         }
         
         return details;
+    }
+
+    @Override
+    public Page<PurchaseOrder> findByMultipleConditions(String keyword, LocalDateTime startTime, 
+            LocalDateTime endTime, Integer orderStatus, Long medicineId, Pageable pageable) {
+        String effectiveKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+        Integer effectiveStatus = (orderStatus != null && orderStatus >= 0) ? orderStatus : null;
+        Long effectiveMedicineId = (medicineId != null && medicineId > 0) ? medicineId : null;
+
+        List<PurchaseOrder> orders = repository.findByMultipleConditions(
+                effectiveKeyword, startTime, endTime, effectiveStatus, effectiveMedicineId);
+        
+        if (!orders.isEmpty()) {
+            orders.forEach(order -> {
+                Hibernate.initialize(order.getMedicine());
+                Hibernate.initialize(order.getOperator());
+            });
+        }
+
+        int total = orders.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+
+        List<PurchaseOrder> content;
+        if (start >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = orders.subList(start, end);
+        }
+
+        return new PageImpl<>(content, pageable, total);
     }
 }

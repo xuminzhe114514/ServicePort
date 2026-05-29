@@ -52,7 +52,7 @@ public class SaleRecord {
 
     @Column(name = "customer_type")
     @JsonView(Views.Detail.class)
-    private Integer customerType;//顾客类型
+    private Integer customerType;//顾客类型：0-普通顾客
 
     @Column(name = "is_Rx")
     @JsonView(Views.Detail.class)
@@ -82,6 +82,37 @@ public class SaleRecord {
     @Column(name = "remark", length = 500)
     @JsonView(Views.Admin.class)
     private String remark;//备注
+
+    @PrePersist
+    public void prePersist() {
+        if (this.quantity == null) {
+            this.quantity = 0;
+        }
+        if (this.unitPrice == null) {
+            this.unitPrice = BigDecimal.ZERO;
+        }
+        if (this.totalAmount == null) {
+            this.totalAmount = BigDecimal.ZERO;
+        }
+        if (this.customerInfo == null) {
+            this.customerInfo = "";
+        }
+        if (this.customerType == null) {
+            this.customerType = 0;
+        }
+        if (this.isRx != true && this.isRx != false) {
+            this.isRx = false;
+        }
+        if (this.saleTime == null) {
+            this.saleTime = LocalDateTime.now();
+        }
+        if (this.remark == null) {
+            this.remark = "";
+        }
+        if (unitPrice != null && quantity != null) {
+            this.totalAmount = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        }
+    }
 
     public void calculateTotalAmount() {
         if (unitPrice != null && quantity != null) {
